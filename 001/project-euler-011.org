@@ -553,7 +553,7 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 137846528820
-: t = 4.68 us
+: t = 4.45 us
 
 * 16 Power digit sum
 ** Q:

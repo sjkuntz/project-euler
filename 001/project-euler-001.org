@@ -216,35 +216,19 @@ opposed to integer addition.
 where \(\varphi=\frac{1+\sqrt{5}}{2}\).
 
 #+begin_src python
-def fibonacci_sequence(n,init=[1,1],mode='length'):
-    """Generate a sequence of Fibonacci numbers. The `length' mode generates a
-    sequence of the length specified by `n', while the `below' mode generates
-    a sequence where all instances are less than or equal to `n'.
-    """
-    a = init
+def fibonacci_sequence(n,init=[1,1]):
+    """Generate a sequence of Fibonacci numbers, ``F_n<n``."""
+    if n<1:
+        return None
+    F = init
+    F_next = F[-2]+F[-1]
+    while F_next < n:
+        F += [F_next]
+        F_next = F[-2]+F[-1]
+    return F
 
-    if mode=='length':
-        if n==1:
-            return [1]
-        for i in range(2,n):
-            a += [a[-2]+a[-1]]
-        return a
-
-    elif mode=='below':
-        if n<1:
-            return None
-        elif n==1:
-            return 1
-        a_next = a[-2]+a[-1]
-        while a_next < n:
-            a += [a_next]
-            a_next = a[-2]+a[-1]
-        return a
-
-assert fibonacci_sequence(1) == [1]
 assert fibonacci_sequence(2) == [1,1]
-assert fibonacci_sequence(10,[1,2]) == [1,2,3,5,8,13,21,34,55,89]
-assert fibonacci_sequence(90,[1,2],'below') == [1,2,3,5,8,13,21,34,55,89]
+assert fibonacci_sequence(90,[1,2]) == [1,2,3,5,8,13,21,34,55,89]
 #+end_src
 
 #+RESULTS:
@@ -262,11 +246,11 @@ arises.
 | \(parity(F_i)\) | odd | even | odd | odd | even | odd | odd | even | ... | odd | odd  | even |
 
 #+begin_src python
-seq = fibonacci_sequence(4000000,[1,2],'below')
+seq = fibonacci_sequence(4000000,[1,2])
 print(sum(seq[1::3]))
 
 time = min(timeit.repeat(
-    "sum(fibonacci_sequence(4000000,[1,2],'below')[1::3])",
+    "sum(fibonacci_sequence(4000000,[1,2])[1::3])",
     "from __main__ import fibonacci_sequence",
     number=1000
 ))*1000
@@ -276,17 +260,17 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 4613732
-: t = 3.57 us
+: t = 4.22 us
 
 We can use huge numbers and still get consistent times. The algorithm is
 \(O(k)\) where \(k\) is the number of terms in the sequence.
 
 #+begin_src python
-seq = fibonacci_sequence(4000000*(10**24),[1,2],'below')
+seq = fibonacci_sequence(4000000*(10**24),[1,2])
 print(sum(seq[1::3]))
 
 time = min(timeit.repeat(
-    "sum(fibonacci_sequence(4000000*(10**24),[1,2],'below')[1::3])",
+    "sum(fibonacci_sequence(4000000*(10**24),[1,2])[1::3])",
     "from __main__ import fibonacci_sequence",
     number=1000
 ))*1000
@@ -296,7 +280,7 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 3080657373857639014791750813074
-: t = 16.39 us
+: t = 17.16 us
 
 * 3 Largest prime factor
 ** Q:
@@ -323,40 +307,20 @@ def prime_factors(n,primes=None):
         return None
 
     p = []
-    if primes is None:
-        # check all prime candidates that are odds indivisible by 3
-        for f in [2,3]:
-            if n%f==0:
-                p += [f]
-                while n%f==0:
-                    n //= f
-        f = 5
-        while f<=n:
-            if n%f==0:
-                p += [f]
-                while n%f==0:
-                    n //= f
-            f += 2 if f%6>1 else 4
-        return p
-    else:
-        # loop through candidate primes
-        for f in primes:
-            if n%f==0:
-                p += [f]
-                while n%f==0:
-                    n //= f
-            if n<f:
-                break
-        return p
+    for f in [2,3]:
+        if n%f==0:
+            p += [f]
+            while n%f==0:
+                n //= f
+    f = 5
+    while f<=n:
+        if n%f==0:
+            p += [f]
+            while n%f==0:
+                n //= f
+        f += 2 if f%6>1 else 4
+    return p
 
-primes = [2,3,5,7,11,13]
-assert prime_factors(1,primes) == None
-assert prime_factors(2,primes) == [2]
-assert prime_factors(3,primes) == [3]
-assert prime_factors(4,primes) == [2]
-assert prime_factors(5,primes) == [5]
-assert prime_factors(6,primes) == [2,3]
-assert prime_factors(24,primes) == [2,3]
 assert prime_factors(2) == [2]
 assert prime_factors(3) == [3]
 assert prime_factors(4) == [2]
@@ -384,7 +348,7 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 6857
-: t = 219.99 us
+: t = 216.76 us
 
 * 4 Largest palindrome product
 ** Q:
@@ -533,10 +497,7 @@ it becomes straightforward to do with Python's =reduce= function from
 #+begin_src python
 def lcm(a,b=None):
     """Find the least common multiple of a list of integers, recursively."""
-    if b is None:
-        return reduce(lcm, a)
-    else:
-        return a*b//gcd(a,b)
+    return reduce(lcm, a) if b is None else a*b//gcd(a,b)
 
 def gcd(a,b):
     """Find the greatest common divisor of two integers."""
@@ -610,9 +571,8 @@ should check out the Wiki page for a cool visualization of the algorithm.
 
 #+begin_src python
 def esieve(n):
-    """Find all primes less than `n' with the Sieve of Eratosthenes. Attempts to
-    be memory and CPU efficient by using a `bitarray' to store whether or not an
-    integer is prime.
+    """Find all primes less than ``n`` with the Sieve of Eratosthenes. Saves
+    memory by using a ``bitarray`` to store whether or not an integer is prime.
     """
     if n<=2:
         return np.array([])
@@ -819,7 +779,7 @@ for \(n\geq6\).
 
 #+begin_src python
 def prime_bounds(n):
-    """Find the lower and upper bounds of the `n'th prime."""
+    """Find the lower and upper bounds of the ``n``th prime."""
     assert type(n)==int and n>=1, "n must be a positive integer."
     if n<6:
         return [1,14]

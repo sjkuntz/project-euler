@@ -1,0 +1,88 @@
+#+TITLE: Project Euler solutions (#61-70)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: stevenjkuntz@gmail.com
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:python :session *python*
+#+PROPERTY: header-args :results output :exports both
+
+Initialize Python session with imports.
+
+#+begin_src python :results none
+import numpy as np
+import timeit
+#+end_src
+
+* 61
+** Q:
+** A:
+* 62
+** Q:
+** A:
+* 63
+** Q:
+** A:
+* 64
+** Q:
+** A:
+* 65
+** Q:
+** A:
+* 66
+** Q:
+** A:
+* 67 Maximum path sum II
+** Q:
+
+By starting at the top of the triangle below and moving to adjacent numbers on
+the row below, the maximum total from top to bottom is 23.
+
+3
+7 4
+2 4 6
+8 5 9 3
+
+That is, 3 + 7 + 4 + 9 = 23.
+
+Find the maximum total from top to bottom in triangle.txt (right click and 'Save
+Link/Target As...'), a 15K text file containing a triangle with one-hundred
+rows.
+
+NOTE: This is a much more difficult version of Problem 18. It is not possible to
+try every route to solve this problem, as there are 299 altogether! If you could
+check one trillion (\(10^{12}\)) routes every second it would take over twenty
+billion years to check them all. There is an efficient algorithm to solve it.
+;o)
+
+** A:
+
+As the statement says, this is a challenging version of [[./project-euler-011.org::* 18 Maximum path sum I][problem 18]]. I'll just
+reuse that code.
+
+#+begin_src python
+from Euler import read_triangle, max_sum_triangle
+
+print(max_sum_triangle(read_triangle("pe067.txt")))
+
+time = min(timeit.repeat(
+    "max_sum_triangle(read_triangle(\"pe067.txt\"))",
+    "from __main__ import read_triangle, max_sum_triangle",
+    number=1
+))*1000
+
+print("t = %.2f ms" % time)
+#+end_src
+
+#+RESULTS:
+: 7273
+: t = 1.32 ms
+
+* 68
+** Q:
+** A:
+* 69
+** Q:
+** A:
+* 70
+** Q:
+** A:
+            
