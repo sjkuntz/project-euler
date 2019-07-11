@@ -1,4 +1,7 @@
+# project specific
 .projectile
+auto/
+ltximg/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

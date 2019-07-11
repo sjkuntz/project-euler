@@ -123,13 +123,13 @@ What is the total of all the name scores in the file?
 I hate text problems. We'll read this file into a =numpy.array= of strings.
 
 #+begin_src python
-def read_names(filename):
-    """Read a list of names from file."""
-    with open(filename) as f:
-        names = []
-        for line in f: 
-            names += line.replace("\"","").split(",")
-    return np.array(names)
+def read_words(filename):
+    """Read a list of words from file."""
+    with open(filename) as file:
+        words = []
+        for line in file:
+            words += line.replace("\"", "").split(",")
+    return np.array(words)
 #+end_src
 
 #+RESULTS:
@@ -139,15 +139,15 @@ We need a way to find the alphabetical value of a word or list of words
 #+begin_src python
 def alphabetical_value(word):
     """Get the alphabetical value for a word or list of words."""
-    if type(word)==str:
+    if isinstance(word, str):
         word = [word]
-    values = np.zeros(len(word),dtype=int)
-    for i, w in enumerate(word):
-         values[i] = sum([(ord(c)-64)%32 for c in w])
+    values = np.zeros(len(word), dtype=int)
+    for i, word_i in enumerate(word):
+        values[i] = sum([(ord(c)-64)%32 for c in word_i])
     return values
 
-assert alphabetical_value("Bob")==19
-assert(alphabetical_value(["Bob","Alice"])==[19,30]).all()
+assert alphabetical_value("Bob") == 19
+assert (alphabetical_value(["Bob", "Alice"]) == [19, 30]).all()
 #+end_src
 
 #+RESULTS:
@@ -156,15 +156,15 @@ Since our names are in a =numpy.array=, sorting is trivial. Given that, multiply
 their alphabetical value by their index and print the total.
 
 #+begin_src python
-names = np.sort(read_names("pe022.txt"))
+names = np.sort(read_words("pe022.txt"))
 print(sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))))
 
 time = min(timeit.repeat(
     """
-names = np.sort(read_names("pe022.txt"))
+names = np.sort(read_words("pe022.txt"))
 assert sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))) == 871198282
     """,
-    "from __main__ import read_names, alphabetical_value, np",
+    "from __main__ import read_words, alphabetical_value, np",
     number=1
 ))*1000
 
@@ -173,7 +173,7 @@ print("t = %.2f ms" % time)
 
 #+RESULTS:
 : 871198282
-: t = 6.65 ms
+: t = 6.76 ms
 
 * 23 Non-abundant sums
 ** Q:
@@ -697,10 +697,10 @@ corner values in terms of the size.
   \end{bmatrix} \]
 
 \begin{eqnarray*}
-c_1 & = & n^2
-c_2 & = & n^2 - (n-1)
-c_3 & = & n^2 - 2(n-1)
-c_4 & = & n^2 - 3(n-1)
+c_1 & = & n^2 \\
+c_2 & = & n^2 - (n-1) \\
+c_3 & = & n^2 - 2(n-1) \\
+c_4 & = & n^2 - 3(n-1) \\
 C   & = & 4n^2 - 6n + 6
 \end{eqnarray*}
 

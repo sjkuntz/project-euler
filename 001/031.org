@@ -2,6 +2,7 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
+#+STARTUP: latexpreview
 #+PROPERTY: header-args:python :session *python*
 #+PROPERTY: header-args :results output :exports both
 
@@ -206,6 +207,7 @@ Looking closely at the table, a pattern arises for the number of digits in
 |     9 |           4 |       4 |
 
 Therefore \(d_a\leq \lfloor (n-1)/2 \rfloor\) and \(d_c = \lfloor n/2 \rfloor\).
+We can also write bounds for \(a,b,c\) as follows.
 
 \[ 1 < a \leq \sum_{i=1}^{d_a} (10-i)10^{d_a-i} \]
 
@@ -213,12 +215,11 @@ Therefore \(d_a\leq \lfloor (n-1)/2 \rfloor\) and \(d_c = \lfloor n/2 \rfloor\).
 
 And if we enforce \(a<b\).
 
-\[ \max \{ a \lfloor \frac{1}{a}\sum_{i=1}^{d_c} i10^{d_c-i} \rfloor \}
+\[ \max \{ a, \lfloor \frac{1}{a}\sum_{i=1}^{d_c} i10^{d_c-i} \rfloor \}
     < b 
     \leq \lfloor \frac{1}{a}\sum_{i=1}^{d_c} (10-i)10^{d_c-i} \rfloor \]
 
-I want to perform this check with a sieve because factoring sucks up computation
-time.
+I check all the options in the bounds and add the products to a set.
 
 #+begin_src python
 def pandigital_products(digits=[1,2,3,4,5,6,7,8,9]):
@@ -235,23 +236,24 @@ def pandigital_products(digits=[1,2,3,4,5,6,7,8,9]):
     c_max = sum([digits[n-i]*(10**(d_c-i)) for i in range(1,d_c+1)])
     a_max = sum([digits[n-i]*(10**(d_a-i)) for i in range(1,d_a+1)])
 
-    products = set()
+    products = []
     for a in range(2,a_max+1):
         for b in range(max(a+1,int(c_min/a)),int(c_max/a)+1):
             c = a*b
             identity = str(a) + str(b) + str(c)
             if is_pandigital(identity,set(digits)):
-                products.add(c)
+                products += [c]
     return products
 
-assert pandigital_products(4)=={12}
-assert pandigital_products(5)=={52}
-assert pandigital_products(6)=={162}
+assert pandigital_products(4)==[12]
+assert pandigital_products(5)==[52]
+assert pandigital_products(6)==[162]
 #+end_src
 
 #+RESULTS:
 
-The algorithm is a bit sluggish, I'm not sure why.
+The algorithm is a bit sluggish, probably because we iterated over so many
+numbers.
 
 #+begin_src python
 print(sum(pandigital_products()))
@@ -266,8 +268,8 @@ print("t = %.2f ms" % time)
 #+end_src
 
 #+RESULTS:
-: 45228
-: t = 81.79 ms
+: 56370
+: t = 82.12 ms
 
 * 33 Digit cancelling fractions
 ** Q:
@@ -289,22 +291,20 @@ the value of the denominator.
 Kind of an easy problem, but there is a clever solution which has minimal
 iterations. Let's assume the fraction has the following form, where \(i\) is the
 digit we "cancel" out. Multiplying this out we can solve for \(i\) in terms of
-\(a\) and \(b\). Since \(i\) must be a whole digit, we simply check that
+\(a\) and \(b\). 
 
 \begin{eqnarray*}
     \frac{10a + i}{10i + b} & = & \frac{a}{b} \\
                   10ab + ib & = & 10ia + ab \\
                         9ab & = & i(10a - b) \\
           \frac{9ab}{10a-b} & = & i
-\begin{eqnarray*}
+\end{eqnarray*}
 
+where \( 1 \leq a < b \leq 9 \).
 
-
-
-
-\[ 10ab + ib = 10ai + ab = \frac{a}{b} \]
-
-\[ 1 \leq a < b \leq 9 \]
+Since \(i\) must be a whole digit, we use =divmod= to get the whole number
+quotient and remainder. In total, we must iterate over \(8(8+1)/2=36\)
+combinations of \(a,b\).
 
 #+begin_src python
 fractions = []
@@ -623,8 +623,6 @@ need at least two multiples, so we can set an upper bound for n.
 
 n × 1 = ...
 n × 2 < 98765
-
-
 
 #+begin_src python
 def pandigital_multiples(digits=[1,2,3,4,5,6,7,8,9]):

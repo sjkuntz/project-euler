@@ -102,7 +102,7 @@ And here's a function definition to get that.
 
 #+begin_src python
 def triangular(n):
-    """Find the `n'th triangular number."""
+    """Find the ``n``th triangular number."""
     return n*(n+1)//2
 
 assert triangular(1)==1
@@ -117,8 +117,8 @@ subtract all multiples of fifteen since they were double-counted by the first
 two terms:
 
 \begin{eqnarray*}
-S & = & (3+6+\ldots+999)  & + (5+10+\ldots+995) & - (15+30+\ldots+990) \\
-  & = & 3(1+2+\ldots+333) & + 5(1+2+\ldots+199) & - 15(1+2+\ldots+66) \\
+S & = & (3+6+\ldots+999) + (5+10+\ldots+995) - (15+30+\ldots+990) \\
+  & = & 3(1+2+\ldots+333) + 5(1+2+\ldots+199) - 15(1+2+\ldots+66) \\
   & = & 3T_{333} + 5T_{199} - 15T_{66}
 \end{eqnarray*}
 
@@ -140,7 +140,7 @@ where
 
 #+begin_src python
 def sum_of_multiples(f1,f2,n):
-    """Find the sum of multiples of `f1' and `f2' less than `n'."""
+    """Find the sum of multiples of ``f1`` and ``f2`` less than ``n``."""
     n0 = n-1
     f3 = f1*f2
     return f1*triangular(n0//f1)+f2*triangular(n0//f2)-f3*triangular(n0//(f3))
@@ -167,7 +167,7 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 233168
-: t = 0.50 us
+: t = 2.46 us
 
 If we try higher numbers, the run time is consistent. We can see here
 the \(O(1)\) scaling.
@@ -186,7 +186,7 @@ print("t = %.2f us" % time)
 
 #+RESULTS:
 : 233333166668
-: t = 0.77 us
+: t = 0.66 us
 
 There is a way to generalize this for list of factors, but that is far beyond
 the scope of this problem.
@@ -298,8 +298,8 @@ we would encounter memory errors. In the code below we don't bother to save the
 exponents since we only really care about the factors.
 
 #+begin_src python
-def prime_factors(n,primes=None):
-    """Find the prime factors of `n'. Returns only primes, not their
+def prime_factors(n):
+    """Find the prime factors of ``n``. Returns only primes, not their
     exponents.
     """
     # if there are no prime factors, or if n is negative, return `None'
@@ -365,9 +365,9 @@ Checking if a number is palindromic is trivial with string manipulation.
 
 #+begin_src python
 def is_palindrome(n):
-    """Check if an integer `n' is a palindrome by converting it to a string."""
+    """Check if an integer ``n`` is a palindrome by converting it to a string."""
     n_str = str(n)
-    for i in range(0,len(n_str)//2):
+    for i in range(len(n_str)//2):
         if n_str[i]!=n_str[-(i+1)]:
             return False
     return True
@@ -406,7 +406,7 @@ print("t = %.2f ms" % time)
 
 #+RESULTS:
 : 906609
-: t = 2.43 ms
+: t = 2.88 ms
 
 *** Top down search
 
@@ -875,13 +875,15 @@ greatest product. What is the value of this product?
 
 ** A:
 
-This is a moving window problem. Let \(N\) be a number with \(n\) digits,
-\(\mathbf{p}\) be a vector where the elements \(p_i\) are the products of
-\(w > 1\) adjacent digits of \(N\), starting with \(d_i\).
+This is a moving window problem. Let \(N\) be a number with \(n\) digits,  \(\mathbf{p}\)
+be a vector where the elements \(p_i\) are the products of \(w > 1\) adjacent
+digits of \(N\), starting with \(d_i\).
 
-\[ N = d_1d_2...d_n \\
-   \mathbf{p} \in \mathbb{R}^{n-w+1} \\
-   p_i = \prod_{k=i}^{i+w-1} d_k \]
+\[ N = d_1d_2...d_n \]
+
+\[ \mathbf{p} \in \mathbb{R}^{n-w+1} \]
+
+\[ p_i = \prod_{k=i}^{i+w-1} d_k \]
 
 #+begin_src python
 def adjacent_products(v,w):
@@ -1072,4 +1074,4 @@ print("t = %.2f ms" % time)
 
 #+RESULTS:
 : 142913828922
-: t = 87.52 ms
+: t = 104.59 ms

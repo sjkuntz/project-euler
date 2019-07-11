@@ -10,7 +10,7 @@ for i in range(0,LAST//100+1):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     for j in range(0,10):
-        filename = dirname + "project-euler-%i%i1.org" % (i,j)
+        filename = dirname + "%i%i1.org" % (i,j)
         filepath = Path(filename)
         if not filepath.exists():
             first = i*100 + j*10 + 1

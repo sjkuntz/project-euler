@@ -1,0 +1,64 @@
+#+TITLE: Project Euler solutions (#171-180)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: stevenjkuntz@gmail.com
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:python :session *python*
+#+PROPERTY: header-args :results output :exports both
+
+Initialize Python session with imports.
+
+#+begin_src python :results none
+import numpy as np
+import timeit
+#+end_src
+
+* 171
+** Q:
+** A:
+* 172
+** Q:
+** A:
+* 173
+** Q:
+** A:
+* 174
+** Q:
+** A:
+* 175
+** Q:
+** A:
+* 176
+** Q:
+** A:
+* 177
+** Q:
+** A:
+* 178
+** Q:
+** A:
+* 179 Consecutive positive divisors
+** Q:
+
+Find the number of integers \(1 < n < 10^7\), for which \(n\) and \(n+1\) have
+the same number of positive divisors. For example, 14 has the positive divisors
+1, 2, 7, 14 while 15 has 1, 3, 5, 15.
+
+** A:
+
+This is easy with the sieve from [[][problem 12]. It does take a while to run though.
+
+#+begin_src python
+from euler import num_divisors_sieve
+
+ndiv = num_divisors_sieve(10000001)
+print(sum(ndiv[2:-1]==ndiv[3:]))
+#+end_src
+
+#+RESULTS:
+: 986262
+: t = 22933.92 ms
+
+* 180
+** Q:
+** A:
+            
