@@ -5,12 +5,12 @@ from pathlib import Path
 # Number of the last problem.
 LAST = 677
 
-for i in range(0,LAST//100+1):
+for i in range(0, LAST//100+1):
     dirname = "./%i01/" % i
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    for j in range(0,10):
-        filename = dirname + "%i%i1.org" % (i,j)
+    for j in range(0, 10):
+        filename = dirname + "%i%i1.org" % (i, j)
         filepath = Path(filename)
         if not filepath.exists():
             first = i*100 + j*10 + 1
@@ -58,6 +58,6 @@ import timeit
 * %i
 ** Q:
 ** A:
-            """ % ((first,first+9) + tuple(range(first,first+10)))
-            with open(filename,"w") as file:
+            """ % ((first, first+9) + tuple(range(first, first+10)))
+            with open(filename, "w") as file:
                 file.write(filecontents)

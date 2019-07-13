@@ -2,12 +2,12 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
-#+PROPERTY: header-args:python :session *python*
-#+PROPERTY: header-args :results output :exports both
+#+PROPERTY: header-args:ipython :session *Python*
+#+PROPERTY: header-args :results raw drawer :exports both
 
 Initialize Python session with imports.
 
-#+begin_src python :results none
+#+begin_src ipython :results none
 from bitarray import bitarray
 from datetime import date, timedelta
 import numpy as np
@@ -22,7 +22,7 @@ import timeit
 In the 20×20 grid below, four numbers along a diagonal line have been marked in
 +red+.
 
-#+begin_src python
+#+begin_src ipython
 A = np.matrix(
     " 8  2 22 97 38 15  0 40  0 75  4  5  7 78 52 12 50 77 91  8;\
      49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48  4 56 62  0;\
@@ -84,9 +84,9 @@ f^w_{i,j} & = & \prod_{k=0}^{w-1} a_{i+k, j+w-k}
 
 And construct \(\mathbf{V,H,B,F}\) with =numpy=:
 
-#+begin_src python
+#+begin_src ipython
 def adjacent_products(A,w):
-    """Find all the adjacent products in matrix `A' of window size `w'."""
+    """Find all the adjacent products in matrix ``A`` of window size ``w``."""
     n, m = A.shape
     V = np.ones((n-w,m),dtype=int)
     H = np.ones((n,m-w),dtype=int)
@@ -105,23 +105,18 @@ assert B[6,8] == 1788696
 
 #+RESULTS:
 
-=numpy= makes this task fast since we can code with matrix operations.
+=numpy= makes this task fast since we can code with matrix operations. Python
+loops are surprisingly slow compared to =numpy=, as the core =numpy= operations
+are actually wrappers for compiled =C=.
 
-#+begin_src python
+#+begin_src ipython
 print(max([np.max(A) for A in [V,H,B,F]]))
-
-time = min(timeit.repeat(
-    "max([np.max(A) for A in adjacent_products(A,4)])",
-    "from __main__ import adjacent_products, A, np",
-    number=10
-))*100000
-
-print("t = %.2f us" % time)
+%timeit max([np.max(A) for A in adjacent_products(A,4)])
 #+end_src
 
 #+RESULTS:
 : 70600674
-: t = 101.69 us
+: 107 µs ± 617 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 * 12 Highly divisible triangular number
 ** Q:
@@ -166,9 +161,10 @@ the sum of divisors for every number \(0,1,...,n-1\). We can additionally find
 proper divisors by subtracting one from =d[1:]=, which we will use on later
 problems.
 
-#+begin_src python
+#+begin_src ipython
 def num_divisors_sieve(n,proper=False):
-    """Find the number of divisors for all nonnegative numbers less than ``n``."""
+    """Find the number of divisors for all nonnegative numbers less than ``n``.
+    """
     d = np.zeros(n,dtype=int)
     for i in range(1,n//2):
         d[i::i] += 1
@@ -186,11 +182,11 @@ assert(num_divisors_sieve(10,True) == [0,0,1,1,2,1,3,1,3,2]).all()
 #+RESULTS:
 : [0 0 1 1 2 1 3 1 3 2]
 
-We need the function from [[./project-euler-001.org::* 1 Multiples of 3 and 5][problem 1]] that gave us \(T_n\).
+We need the function from [[file:001.org::* 1 Multiples of 3 and 5][problem 1]] that gave us \(T_n\).
 
-#+begin_src python
+#+begin_src ipython
 def triangular(n):
-    """Find the `n'th triangular number."""
+    """Find the ``n``th triangular number."""
     return n*(n+1)//2
 
 assert triangular(1)==1
@@ -200,7 +196,7 @@ assert triangular(100)==5050
 
 #+RESULTS:
 
-We know that \(T_n = \frac{n(n+1)}{2}\) (see [[./project-euler-001.org::* 1 Multiples of 3 and 5][problem 1]]) and that all \(n,n+1\)
+We know that \(T_n = \frac{n(n+1)}{2}\) (see [[file:001.org::* 1 Multiples of 3 and 5][problem 1]]) and that all \(n,n+1\)
 are coprime. Therefore, we can break the problem into smaller problems. First,
 write \(T_n\) as the product of two coprime integers, keeping in mind that \(n\)
 and any factors of \(n+1\) are coprime, and \(n+1\) and any factors of \(n\) are
@@ -253,10 +249,10 @@ We already know \(T_n\) is a product of coprimes. Therefore,
 Now we have a way to iterate over \(i\) and find \(D(T_i)\) without explicitly
 calculating the number of divisors of \(T_i\).
 
-#+begin_src python
+#+begin_src ipython
 def triangular_divisors(k,limit):
-    """Find the first triangular number with more than `k' divisors. Requires a
-    limit with which to generate the sieve of number of divisors."""
+    """Find the first triangular number with more than ``k`` divisors. Requires
+    a limit with which to generate the sieve of number of divisors."""
     d = num_divisors_sieve(limit)
     for i in range(1,len(d)-1):
         dtri = d[i//2]*d[i+1] if i%2==0 else d[i]*d[(i+1)//2]
@@ -274,21 +270,14 @@ actually a bit less). Our algorithm takes \(O(n)\) time, where \(n\) is the
 index of the triangular number we guess. If we had sieved over all \(T_n\), this
 would have taken \(O(T_n)=O(n^2)\) time.
 
-#+begin_src python
+#+begin_src ipython
 print(triangular_divisors(500,15000))
-
-time = min(timeit.repeat(
-    "triangular_divisors(500,15000)",
-    "from __main__ import triangular_divisors",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit triangular_divisors(500,15000)
 #+end_src
 
 #+RESULTS:
 : 76576500
-: t = 15.18 ms
+: 17.4 ms ± 18.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 13 Large sum
 ** Q:
@@ -296,7 +285,7 @@ print("t = %.2f ms" % time)
 Work out the first ten digits of the sum of the following one-hundred
 50-digit numbers.
 
-#+begin_src python :results none
+#+begin_src ipython :results none
 numbers = np.array([
   37107287533902102798797998220837590246510135740250,
   46376937677490009712648124896970078050417018260538,
@@ -405,23 +394,16 @@ numbers = np.array([
 
 Python has support for large integers, making this problem trivial.
 
-#+begin_src python
+#+begin_src ipython
 S = sum(numbers)
 print(str(S)[:10])
 
-print(
-  "t = %.2f us" %
-  (min(timeit.repeat(
-     "str(sum(numbers))[:10]",
-     "from __main__ import numbers",
-   number=1000
-   ))*1000)
-)
+%timeit str(sum(numbers))[:10]y
 #+end_src
 
 #+RESULTS:
 : 5537376230
-: t = 5.03 us
+: 4.4 µs ± 62 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 14 Longest Collatz sequence
 ** Q:
@@ -462,10 +444,10 @@ list. This will save us a huge amount of time in constructing the list, since we
 can only iterate over the branches of the tree, rather than the complete
 sequence every time.
 
-#+begin_src python
+#+begin_src ipython
 def collatz_sieve(n):
     """Find the lengths of the collatz sequences for every starting number
-    `1,2,...,n-1'.
+    ``1,2,...,n-1``.
     """
     collatz = np.zeros(n-1,dtype=int)
     collatz[0] = 1
@@ -486,9 +468,9 @@ assert(collatz_sieve(10)==[1,2,8,3,6,9,17,4,20]).all()
 I also wrote a helper function to more quickly find the answer to this problem
 in a generalized fashion.
 
-#+begin_src python
+#+begin_src ipython
 def longest_collatz(n):
-    """Find the starting number (less than `n') and sequence length for the
+    """Find the starting number (less than ``n``) and sequence length for the
     longest collatz sequence.
     """
     c = collatz_sieve(n)
@@ -504,21 +486,14 @@ assert longest_collatz(1000) == (871, 179)
 
 Now our algorithm runs in \(O(n)\).
 
-#+begin_src python
+#+begin_src ipython
 print(longest_collatz(1000000))
-
-time = min(timeit.repeat(
-    "longest_collatz(1000000)",
-    "from __main__ import longest_collatz",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit longest_collatz(1000000)
 #+end_src
 
 #+RESULTS:
 : (837799, 525)
-: t = 951.39 ms
+: 954 ms ± 6.46 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
 
 * 15 Lattice paths
 ** Q:
@@ -538,25 +513,18 @@ and we will choose \(n\) of those steps to use our "down" moves. The number of
 ways in which we can allocate those "down" moves is just a combination of the
 following form.
 
-\[ {n+m \choose n} \]
+\[ {n+m \choose n} = {n+m \choose m} \]
 
 Since we have an explicit formula, our calculation can be super speedy.
 
-#+begin_src python
+#+begin_src ipython
 print(int(scipy.special.comb(20+20,20)))
-
-time = min(timeit.repeat(
-    "scipy.special.comb(20+20,20)",
-    "import scipy.special",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit int(scipy.special.comb(20+20,20))
 #+end_src
 
 #+RESULTS:
 : 137846528820
-: t = 4.45 us
+: 4.43 µs ± 8.18 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 16 Power digit sum
 ** Q:
@@ -570,20 +538,14 @@ What is the sum of the digits of the number \(2^{1000}\)?
 Again, Python has support for integers of arbitrary size, so this problem is
 trivial.
 
-#+begin_src python
+#+begin_src ipython
 print(sum([int(d) for d in str(2**1000)]))
-
-time = min(timeit.repeat(
-    "sum([int(d) for d in str(2**1000)])",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit sum([int(d) for d in str(2**1000)])
 #+end_src
 
 #+RESULTS:
 : 1366
-: t = 39.66 us
+: 41 µs ± 974 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 * 17 Number letter counts
 ** Q:
@@ -603,7 +565,7 @@ usage.
 
 Brute force. I didn't like this problem. So I hard coded it and let it be.
 
-#+begin_src python
+#+begin_src ipython
 c = np.zeros(5,dtype=int)
 # 0) 1-9
 ones = ['one','two','three','four','five','six','seven','eight','nine']
@@ -679,7 +641,7 @@ clever method! ;o)
 First, we're going to need a way to read a triangular matrix from a file because
 problem 67 requires it.
 
-#+begin_src python
+#+begin_src ipython
 def read_triangle(filename):
     """Read a triangular matrix from a file or string. Uses an array of arrays
     rather than 2d array because the inner arrays aren't uniform length.
@@ -692,7 +654,7 @@ def read_triangle(filename):
         )
     return tri
 
-tri = read_triangle("pe018.txt")
+tri = read_triangle("018.txt")
 assert tri[0][0] == 75
 assert(tri[1] == [95,64]).all()
 assert(tri[4] == [20,4,82,47,65]).all()
@@ -716,7 +678,7 @@ four-deep triangular matrix given in the problem statement.
 8 5 9 3
 #+end_src
 
-#+begin_src python
+#+begin_src ipython
 def max_sum_triangle(tri):
     """Find the maximum sum path in a binary tree. Requires tree in a matrix
     form. Uses an array of arrays rather than 2d array because the inner arrays
@@ -736,25 +698,16 @@ With this idea, we have to iterate over all the non-leaf nodes, or \(T_{n-1}\)
 nodes (where \(T_n\) is the \(n\)th triangular number), which is \(O(n^2)\) with
 respect to tree depth.
 
-#+begin_src python
-tri = read_triangle("pe018.txt")
+#+begin_src ipython
+tri = read_triangle("018.txt")
 print(max_sum_triangle(tri))
 
-time = min(timeit.repeat(
-    """
-tri = read_triangle("pe018.txt")
-max_sum_triangle(tri)
-    """,
-    "from __main__ import read_triangle, max_sum_triangle",
-    number=100
-))*10000
-
-print("t = %.2f us" % time)
+%timeit max_sum_triangle(read_triangle("018.txt"))
 #+end_src
 
 #+RESULTS:
 : 1074
-: t = 94.73 us
+: 89.4 µs ± 748 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 * 19 Counting Sundays
 ** Q
@@ -781,10 +734,10 @@ I could code this up explicitly, but it is much easier to use built-in =date=
 object. The days of week are coded =0-6= for Monday to Sunday. Brute force by
 looping over all the 1st of months until we run out of bounds. 
 
-#+begin_src python
-def foo(years,day,weekday):
+#+begin_src ipython
+def pe019(years,day,weekday):
     """Count the number of times a given day of the month falls on a day of the
-    week for the given years. Weekdays are coded `0-6' for Mon through Sun.
+    week for the given years. Weekdays are coded ``0-6`` for Mon through Sun.
     """
     count = 0
     for year in years:
@@ -793,31 +746,21 @@ def foo(years,day,weekday):
                 count += 1
     return count
 
-assert foo([2019],1,6)==2
+assert pe019([2019],1,6)==2
 #+end_src
 
 #+RESULTS:
 
 This is surprisingly slow, but manageable.
 
-#+begin_src python
-print(foo(range(1901,2001),1,6))
-
-time = min(timeit.repeat(
-    "foo(range(1901,2001),1,6)",
-    """
-from datetime import date
-from __main__ import foo
-    """,
-    number=100
-))*10000
-
-print("t = %.2f us" % time)
+#+begin_src ipython
+print(pe019(range(1901,2001),1,6))
+%timeit pe019(range(1901,2001),1,6)
 #+end_src
 
 #+RESULTS:
 : 171
-: t = 248.62 us
+: 252 µs ± 5.88 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
 
 * 20 Factorial digit sum
 ** Q:
@@ -833,11 +776,11 @@ Find the sum of the digits in the number 100!
 
 Trivial because Python can handle large integers.
 
-#+begin_src python
+#+begin_src ipython
 def factsum(n):
-  """Find the sum of the digits of `n!'."""
-  fact = factorial(n)
-  return sum(map(int, str(fact)))
+    """Find the sum of the digits of ``n!``."""
+    fact = factorial(n)
+    return sum(map(int, str(fact)))
 
 assert factsum(1) == 1
 assert factsum(2) == 2
@@ -846,18 +789,13 @@ assert factsum(4) == 6
 assert factsum(10) == 27
 #+end_src
 
-#+begin_src python
+#+RESULTS:
+
+#+begin_src ipython
 print(factsum(100))
-
-time = min(timeit.repeat(
-    "factsum(100)",
-    "from __main__ import factsum",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit factsum(100)
 #+end_src
 
 #+RESULTS:
 : 648
-: t = 16.63 us
+: 15.2 µs ± 541 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)

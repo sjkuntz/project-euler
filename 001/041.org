@@ -2,12 +2,12 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
-#+PROPERTY: header-args:python :session *python*
+#+PROPERTY: header-args:ipython :session *python*
 #+PROPERTY: header-args :results output :exports both
 
 Initialize Python session with imports.
 
-#+begin_src python :results none
+#+begin_src ipython :results none
 from collections import OrderedDict
 from itertools import permutations
 import numpy as np
@@ -41,8 +41,8 @@ That leaves us with \(n=7\), and lets us put an upper bound on our search.
 
 \[ N \leq 7654321 \]
 
-#+begin_src python
-from Euler import esieve, is_pandigital
+#+begin_src ipython
+from euler import esieve, is_pandigital
 
 def pandigital_prime(n):
     """Find the largest pandigital prime less than ``n``."""
@@ -55,25 +55,17 @@ assert pandigital_prime(2144)==2143
 #+end_src
 
 #+RESULTS:
-: 2143
 
 The algorithm shares the run time complexity of the Sieve of Eratosthenes.
 
-#+begin_src python
+#+begin_src ipython
 print(pandigital_prime(7654322))
-
-time = min(timeit.repeat(
-    "pandigital_prime(7654322)",
-    "from __main__ import pandigital_prime",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit pandigital_prime(7654322)
 #+end_src
 
 #+RESULTS:
 : 7652413
-: t = 354.40 ms
+: 350 ms ± 1.97 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
 
 * 42 Coded triangle numbers
 ** Q:
@@ -99,27 +91,18 @@ numbers, read the file, and compute scores. I chose to make a set of the first
 100 triangle numbers. The 100th will be \(T_{100}=100(101)/2=5050\) which would
 correspond to no less than 195 Zs in a row.
 
-#+begin_src python
-from Euler import triangular, read_words, alphabetical_value
+#+begin_src ipython
+from euler import triangular, read_words, alphabetical_value
 
 tri_set = {triangular(i) for i in range(100)}
-print(len([t for t in alphabetical_value(read_words("pe042.txt")) if (t in tri_set)]))
+print(len([t for t in alphabetical_value(read_words("042.txt")) if (t in tri_set)]))
 
-time = min(timeit.repeat(
-    """
-tri_set = {triangular(i) for i in range(100)}
-len([t for t in alphabetical_value(read_words("pe042.txt")) if (t in tri_set)])
-    """,
-    "from __main__ import triangular, read_words, alphabetical_value",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit tri_set = {triangular(i) for i in range(100)}; len([t for t in alphabetical_value(read_words("042.txt")) if (t in tri_set)])
 #+end_src
 
 #+RESULTS:
 : 162
-: t = 2.93 ms
+: 2.74 ms ± 70 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 43 Sub-string divisibility
 ** Q:
@@ -222,16 +205,12 @@ Now the only digits left are \(1,4\).
 
 \[ N \in \{1430952867,1460357289,1406357289,4130952867,4160357289,4106357289\} \]
 
-#+begin_src python
+#+begin_src ipython
 print(sum([1430952867,1460357289,1406357289,4130952867,4160357289,4106357289]))
 #+end_src
 
 #+RESULTS:
-: Python 3.7.3 (default, Mar 27 2019, 22:11:17) 
-: [GCC 7.3.0] :: Anaconda, Inc. on linux
-: Type "help", "copyright", "credits" or "license" for more information.
 : 16695334890
-: python.el: native completion setup loaded
 
 * 44 Pentagon numbers
 ** Q:
@@ -252,7 +231,7 @@ value of \(D\)?
 
 Here's a wrapper for the pentagonal numbers.
 
-#+begin_src python
+#+begin_src ipython
 def pentagonal(n):
     """Find the ``n``th pentagonal number.
 
@@ -271,8 +250,8 @@ Let \(a>b>c>d\). We want these numbers to obey the following equations, and we
 want to minimize \(D=P_d\).
 
 \begin{eqnarray*}
-S = P_a & = & P_b + P_c \\
-D = P_d & = & P_b - P_c \\
+S = P_a = P_b + P_c \\
+D = P_d = P_b - P_c \\
 \end{eqnarray*}
 
 The difference of these equations gives
@@ -287,7 +266,7 @@ So we can iterate through \(P_a,P_c\), caching \(P_a\) as we go in an ordered
 set. This ensures we can check for every \(P_b,P_c,P_d\) that arises. I'm not
 sure why the first hit is the right answer, but it works. Fuck it.
 
-#+begin_src python
+#+begin_src ipython
 def pe044():
     """Find the pair of pentagonal numbers where their sum and difference are
     also pentagonal and the difference is minimized. Returns the difference.
@@ -325,7 +304,7 @@ Find the next triangle number that is also pentagonal and hexagonal.
 
 Here's a wrapper for the hexagonal numbers.
 
-#+begin_src python
+#+begin_src ipython
 def hexagonal(n):
     """Find the ``n``th hexagonal number.
 
@@ -344,7 +323,7 @@ assert hexagonal(3) == 15
 
 Now I just build two sets as I iterate.
 
-#+begin_src python
+#+begin_src ipython
 p_set = set()
 h_set = set()
 a = 1
@@ -392,7 +371,7 @@ and if it is not finding some \(p\) in the cache such that \(\frac{n-p}{2}\) is
 a perfect square for the misses. If there is not a prime in the cache, return
 \(n\).
 
-#+begin_src python
+#+begin_src ipython
 from euler import is_prime
 
 def anti_goldbach():
@@ -415,19 +394,12 @@ def anti_goldbach():
         n += 2
 
 print(anti_goldbach())
-
-time = min(timeit.repeat(
-    "anti_goldbach()",
-    "from __main__ import anti_goldbach",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit anti_goldbach()
 #+end_src
 
 #+RESULTS:
 : 5777
-: t = 42.47 ms
+: 51 ms ± 267 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 47 Distinct primes factors
 ** Q:
@@ -450,7 +422,7 @@ each. What is the first of these numbers?
 
 Another =while True= loop.
 
-#+begin_src python
+#+begin_src ipython
 from euler import prime_factors
 
 n_pfact = []
@@ -475,28 +447,22 @@ Find the last ten digits of the series, \(1^1 + 2^2 + 3^3 + ... + 1000^{1000}\).
 
 ** A:
 
-Another of many large number problems made irrelevant by Python's support for
+Another of many large number problems made irrelevant by ipython's support for
 large integers.
 
-#+begin_src python
+#+begin_src ipython
 def sum_self_pow(n):
     return sum([i**i for i in range(1,n+1)])
 
 assert sum_self_pow(10) == 10405071317
 print(str(sum_self_pow(1000))[-10:])
 
-time = min(timeit.repeat(
-    "str(sum_self_pow(1000))[-10:]",
-    "from __main__ import sum_self_pow",
-    number=10
-))*100
-
-print("t = %.2f ms" % time)
+%timeit sum_self_pow(1000)
 #+end_src
 
 #+RESULTS:
 : 9110846700
-: t = 6.28 ms
+: 7.1 ms ± 58.7 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 49 Prime permutations
 ** Q:
@@ -516,7 +482,7 @@ sequence?
 We want three primes \(1000 \leq p_1 < p_2 < p_3 < 10000\) such that
 \(p_3-p_2=p_2-p_1=k\). I'm going to assume I use the same \(k\).
 
-#+begin_src python
+#+begin_src ipython
 from euler import esieve
 primes = esieve(10000)
 primes = primes[primes>=1000]
@@ -558,7 +524,7 @@ Easy with Sieve of Eratosthenes. Let \(S(n)=p_1+p_2+\ldots+p_n\) be the sum of
 the first \(n\) primes. We want to maximize \(L=n-m\) such that \(S(n)-S(m)<N\)
 is prime.
 
-#+begin_src python
+#+begin_src ipython
 from euler import esieve
 
 def pe050(n):
@@ -582,18 +548,11 @@ assert pe050(1000) == 953
 
 Quick.
 
-#+begin_src python
+#+begin_src ipython
 print(pe050(1000000))
-
-time = min(timeit.repeat(
-    "pe050(1000000)",
-    "from __main__ import pe050",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit pe050(1000000)
 #+end_src
 
 #+RESULTS:
 : 997651
-: t = 44.47 ms
+: 55.2 ms ± 241 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)

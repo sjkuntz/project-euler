@@ -2,13 +2,12 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
-#+STARTUP: latexpreview
-#+PROPERTY: header-args:python :session *python*
+#+PROPERTY: header-args:ipython :session *python*
 #+PROPERTY: header-args :results output :exports both
 
 Initialize Python session with imports.
 
-#+begin_src python :results none
+#+begin_src ipython :results none
 from bitarray import bitarray
 from collections.abc import Iterable
 from functools import reduce
@@ -80,7 +79,7 @@ And 5.
 |--------+--------+--------+--------+--------+--------|
 |      1 |      1 |      2 |      3 |      5 |      7 |
 
-#+begin_src python
+#+begin_src ipython
 def change_combinations(coins,value):
     """Find the number of ways to make ``value`` from the coins in ``coins``,
     repetitions allowed."""
@@ -98,39 +97,25 @@ assert change_combinations([1,2,3,4,5],5)==7
 
 The algorithm runs quickly.
 
-#+begin_src python
+#+begin_src ipython
 print(change_combinations([1,2,5,10,20,50,100,200],200))
-
-time = min(timeit.repeat(
-    "change_combinations([1,2,5,10,20,50,100,200],200)",
-    "from __main__ import change_combinations",
-    number=100
-))*10000
-
-print("t = %.2f us" % time)
+%timeit change_combinations([1,2,5,10,20,50,100,200],200)
 #+end_src
 
 #+RESULTS:
 : 73682
-: t = 88.53 us
+: 83.1 µs ± 1.64 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
 
 And scales well.
 
-#+begin_src python
+#+begin_src ipython
 print(change_combinations([1,2,5,10,20,50,100,200,500,1000,2000],2000))
-
-time = min(timeit.repeat(
-    "change_combinations([1,2,5,10,20,50,100,200,500,1000,2000],2000)",
-    "from __main__ import change_combinations",
-    number=10
-))*100
-
-print("t = %.2f ms" % time)
+%timeit change_combinations([1,2,5,10,20,50,100,200,500,1000,2000],2000)
 #+end_src
 
 #+RESULTS:
 : 28311903609
-: t = 1.77 ms
+: 1.57 ms ± 50.7 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
 
 * 32 Pandigital products
 ** Q:
@@ -153,7 +138,7 @@ include it once in your sum.
 Checking if a number is pandigital is trivial using a length equivalence check
 and a set equivalence check.
 
-#+begin_src python
+#+begin_src ipython
 def is_pandigital(n,digits={1,2,3,4,5,6,7,8,9}):
     """Check if a number ``n`` is pandigital with respect to a set of
     ``digits``."""
@@ -221,7 +206,7 @@ And if we enforce \(a<b\).
 
 I check all the options in the bounds and add the products to a set.
 
-#+begin_src python
+#+begin_src ipython
 def pandigital_products(digits=[1,2,3,4,5,6,7,8,9]):
     """Find all the products such that the identity ``ab=c`` which is pandigital
     for the list ``digits``."""
@@ -255,21 +240,14 @@ assert pandigital_products(6)==[162]
 The algorithm is a bit sluggish, probably because we iterated over so many
 numbers.
 
-#+begin_src python
+#+begin_src ipython
 print(sum(pandigital_products()))
-
-time = min(timeit.repeat(
-    "sum(pandigital_products())",
-    "from __main__ import pandigital_products",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum(pandigital_products())
 #+end_src
 
 #+RESULTS:
 : 56370
-: t = 82.12 ms
+: 80.3 ms ± 1.22 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 33 Digit cancelling fractions
 ** Q:
@@ -306,7 +284,7 @@ Since \(i\) must be a whole digit, we use =divmod= to get the whole number
 quotient and remainder. In total, we must iterate over \(8(8+1)/2=36\)
 combinations of \(a,b\).
 
-#+begin_src python
+#+begin_src ipython
 fractions = []
 prod = 1
 for b in range(1,10):
@@ -353,7 +331,7 @@ How many circular primes are there below one million?
 
 Firstly, here's a helper function to rotate integers.
 
-#+begin_src python
+#+begin_src ipython
 def rotate_int(n):
     """Find all rotations of the int ``n``."""
     n_str = str(n)
@@ -369,8 +347,8 @@ sieve up to \(10^{\lceil\log_{10}n\rceil}\) rather than \(n\), making sure that
 every possible rotation is considered. This is necessary to handle cases where
 \(n\) is not a power of 10.
 
-#+begin_src python
-from Euler import esieve
+#+begin_src ipython
+from euler import esieve
 
 def circular_primes(n):
     """Find all the circular primes less than ``n``."""
@@ -399,21 +377,14 @@ assert circular_primes(97)=={2,3,5,7,11,13,17,31,37,71,73,79}
 The most significant savings in runtime were found by using sets and reducing
 their size by excluding even digits.
 
-#+begin_src python
+#+begin_src ipython
 print(len(circular_primes(1000000)))
-
-time = min(timeit.repeat(
-    "len(circular_primes(1000000))",
-    "from __main__ import circular_primes",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit len(circular_primes(1000000))
 #+end_src
 
 #+RESULTS:
 : 55
-: t = 114.79 ms
+: 123 ms ± 9.29 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 36 Double-base palindromes
 ** Q:
@@ -433,7 +404,7 @@ palindromic in base 2. The following functions will check if a number is
 palindromic and generate all the base 10 palindromes with a given number of
 digits.
 
-#+begin_src python
+#+begin_src ipython
 def is_palindrome(n,b):
     """Check if an integer ``n`` is a palindrome in base ``b``."""
     rev = 0
@@ -469,7 +440,7 @@ making it odd. We only need to check odd numbers in our palindromes. Not sure
 a good =assert= statement to use here, but you get the point that it picked up
 585.
 
-#+begin_src python
+#+begin_src ipython
 def decimal_binary_palindromes(n):
     """Find all numbers less than ``n`` that are palindromic in base 2 and 10
     """
@@ -490,39 +461,25 @@ print(decimal_binary_palindromes(1000))
 
 I'd call this method good enough.
 
-#+begin_src python
+#+begin_src ipython
 print(sum(decimal_binary_palindromes(1000000)))
-
-time = min(timeit.repeat(
-    "sum(decimal_binary_palindromes(1000000))",
-    "from __main__ import decimal_binary_palindromes",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum(decimal_binary_palindromes(1000000))
 #+end_src
 
 #+RESULTS:
 : 872187
-: t = 9.86 ms
+: 11.4 ms ± 701 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 Shit, it even has sublinear scaling. Can't complain about that.
 
-#+begin_src python
+#+begin_src ipython
 print(sum(decimal_binary_palindromes(100000000)))
-
-time = min(timeit.repeat(
-    "sum(decimal_binary_palindromes(100000000))",
-    "from __main__ import decimal_binary_palindromes",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum(decimal_binary_palindromes(100000000))
 #+end_src
 
 #+RESULTS:
 : 39347399
-: t = 131.12 ms
+: 151 ms ± 9.59 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 37 Truncatable primes
 ** Q:
@@ -542,7 +499,7 @@ NOTE: 2, 3, 5, and 7 are not considered to be truncatable primes.
 This is similar to the circular primes problem. These primes are called
 [[https://oeis.org/A020994][two-sided primes]]. We know there are only eleven, and what they are.
 
-#+begin_src python
+#+begin_src ipython
 tsp = [2, 3, 5, 7, 23, 37, 53, 73, 313, 317, 373, 797, 3137, 3797, 739397]
 print(sum(tsp[4:]))
 #+end_src
@@ -555,7 +512,7 @@ candidate for being prime, left prime, and right prime. I don't feel like doing
 this, so I'm going to use my omnipotence of A020994 to enforce an upper bound of
 one million.
 
-#+begin_src python
+#+begin_src ipython
 def two_sided_primes(n):
     """Find the two-sided primes less than ``n``."""
     if n<=23:
@@ -581,21 +538,14 @@ assert len(two_sided_primes(1000))==8
 It is kind of slow, but it's far better than trying to check tons of numbers for
 being prime.
 
-#+begin_src python
+#+begin_src ipython
 print(sum(two_sided_primes(1000000)))
-
-time = min(timeit.repeat(
-    "sum(two_sided_primes(1000000))",
-    "from __main__ import two_sided_primes",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum(two_sided_primes(1000000))
 #+end_src
 
 #+RESULTS:
 : 748317
-: t = 113.12 ms
+: 137 ms ± 11.4 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 38 Pandigital multiples
 ** Q:
@@ -624,7 +574,7 @@ need at least two multiples, so we can set an upper bound for n.
 n × 1 = ...
 n × 2 < 98765
 
-#+begin_src python
+#+begin_src ipython
 def pandigital_multiples(digits=[1,2,3,4,5,6,7,8,9]):
     """Find all the numbers ``n`` for which their multiples concatenate to form
     a number pandigital in ``digits``."""
@@ -664,25 +614,18 @@ We can reuse the triples generator from [[./project-euler-001.org::* 9 Special P
 given triangle perimeter. Then, we just iterate over all perimeters and take the
 \(\argmax\). We could save time by skipping the odd numbers.
 
-#+begin_src python
-from Euler import pythagorean_triples_from_sum
+#+begin_src ipython
+from euler import pythagorean_triples_from_sum
 
 assert len(pythagorean_triples_from_sum(120)[0])==3
 
 print(np.argmax([len(pythagorean_triples_from_sum(i)) for i in range(0,1001)]))
-
-time = min(timeit.repeat(
-    "np.argmax([len(pythagorean_triples_from_sum(i)) for i in range(0,1001)])",
-    "from __main__ import pythagorean_triples_from_sum, np",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit np.argmax([len(pythagorean_triples_from_sum(i)) for i in range(0,1001)])
 #+end_src
 
 #+RESULTS:
 : 840
-: t = 1.63 ms
+: 2 ms ± 145 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
 
 * 40 Champernowne's constant
 ** Q:
@@ -727,7 +670,7 @@ number. The remainder is the digit's place in \(n\).
 
 \[ n = 10^k + \lfloor (i-S(k)-1)/(k+1) \rfloor \]
 
-#+begin_src python
+#+begin_src ipython
 def champernowne_digit(i,digits=None):
     """Find the ``n``th digit of Champernowne's constant."""
     if digits is None:
@@ -749,39 +692,25 @@ assert champernowne_digit(12)==1
 
 This is extremely fast.
 
-#+begin_src python
+#+begin_src ipython
 print(reduce(mul,[champernowne_digit(10**i) for i in range(7)]))
-
-time = min(timeit.repeat(
-    "reduce(mul,[champernowne_digit(10**i) for i in range(7)])",
-    "from __main__ import reduce, mul, champernowne_digit",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit reduce(mul,[champernowne_digit(10**i) for i in range(7)])
 #+end_src
 
 #+RESULTS:
 : 210
-: t = 16.51 us
+: 17.2 µs ± 1.41 µs per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 Simulating the hackerrank version, it remains as fast.
 
-#+begin_src python
+#+begin_src ipython
 ii = [37179634687547126, 243570604996000042, 889412298717781865,
       928015702768494271, 219144108876736854, 519463297996240891, 
       766406432258028844]
 print(reduce(mul,[champernowne_digit(i) for i in ii]))
-
-time = min(timeit.repeat(
-    "reduce(mul,[champernowne_digit(i) for i in ii])",
-    "from __main__ import reduce, mul, champernowne_digit, ii",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit reduce(mul,[champernowne_digit(i) for i in ii])
 #+end_src
 
 #+RESULTS:
 : 10080
-: t = 49.96 us
+: 50 µs ± 128 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)

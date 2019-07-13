@@ -2,15 +2,15 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: skuntz@ucsb.edu
 #+OPTIONS: num:nil toc:1
-#+PROPERTY: header-args:python :session *python*
+#+PROPERTY: header-args:ipython :session *python*
 #+PROPERTY: header-args :results output :exports both
 
 Initialize Python session with imports.
 
-#+begin_src python :results none
+#+begin_src ipython :results none
 from bitarray import bitarray
 import numpy as np
-from math import ceil, factorial, log10, sqrt
+from math import ceil, factorial, log, log10, sqrt
 import timeit
 #+end_src
 
@@ -37,10 +37,10 @@ some way to sieve for the sum of divisors. The follow function accomplishes this
 by iterating over all the divisors, adding itself and its quotient at all the
 multiples.
 
-#+begin_src python
+#+begin_src ipython
 def sum_divisors_sieve(n,proper=True):
-    """Sieve for the sum of proper divisors for natural numbers less than `n'.
-    Optionally, we can include the number itself with `proper=False'."""
+    """Sieve for the sum of proper divisors for natural numbers less than ``n``.
+    Optionally, we can include the number itself with ``proper=False``."""
     dsum = np.ones(n,dtype=int)
     dsum[:2] = 0
     for i in range(2,int((n-1)**0.5)+1):
@@ -69,9 +69,9 @@ sure that every pair we return is unique. The function returns a list of tuples.
 I realize this is awkward to sum up later, but I felt it followed the
 mathematics more closely to do it that way.
 
-#+begin_src python
+#+begin_src ipython
 def amicable_pairs(n):
-    """Find all the amicable pairs less than `n'."""
+    """Find all the amicable pairs less than ``n``."""
     dsum = sum_divisors_sieve(n)
     pairs = []
     for a in range(1,n):
@@ -88,21 +88,14 @@ assert amicable_pairs(285)[0]==(220,284)
 
 We finally have to sum up all the numbers in the list of tuples.
 
-#+begin_src python
+#+begin_src ipython
 print(sum([sum(pair) for pair in amicable_pairs(10000)]))
-
-time = min(timeit.repeat(
-    "assert sum([sum(pair) for pair in amicable_pairs(10000)])==31626",
-    "from __main__ import amicable_pairs",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum([sum(pair) for pair in amicable_pairs(10000)])
 #+end_src
 
 #+RESULTS:
 : 31626
-: t = 4.37 ms
+: 4.11 ms ± 26.8 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 22 Names scores
 ** Q:
@@ -122,7 +115,7 @@ What is the total of all the name scores in the file?
 
 I hate text problems. We'll read this file into a =numpy.array= of strings.
 
-#+begin_src python
+#+begin_src ipython
 def read_words(filename):
     """Read a list of words from file."""
     with open(filename) as file:
@@ -136,7 +129,7 @@ def read_words(filename):
 
 We need a way to find the alphabetical value of a word or list of words
 
-#+begin_src python
+#+begin_src ipython
 def alphabetical_value(word):
     """Get the alphabetical value for a word or list of words."""
     if isinstance(word, str):
@@ -155,25 +148,16 @@ assert (alphabetical_value(["Bob", "Alice"]) == [19, 30]).all()
 Since our names are in a =numpy.array=, sorting is trivial. Given that, multiply
 their alphabetical value by their index and print the total.
 
-#+begin_src python
-names = np.sort(read_words("pe022.txt"))
+#+begin_src ipython
+names = np.sort(read_words("022.txt"))
 print(sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))))
 
-time = min(timeit.repeat(
-    """
-names = np.sort(read_words("pe022.txt"))
-assert sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))) == 871198282
-    """,
-    "from __main__ import read_words, alphabetical_value, np",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit names = np.sort(read_words("022.txt")); sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1)))
 #+end_src
 
 #+RESULTS:
 : 871198282
-: t = 6.76 ms
+: 6.51 ms ± 58.1 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 23 Non-abundant sums
 ** Q:
@@ -203,13 +187,13 @@ fact, it can't scale. It says so in the problem statement. "All integers greater
 than 28123 can be written as the sum of two abundant numbers." Given this, we
 have no real need to make the problem scalable, but we can make it fast. Let's
 start by finding all the abundant numbers, making sure to employ the sum of
-divisors sieve from [[* 21 Amicable numbers][problem 21]]. We can also use a similar strategy for the
+divisors sieve from problem 21. We can also use a similar strategy for the
 deficient numbers and perfect numbers if we so desire, but that is beyond the
 scope of the problem at hand.
 
-#+begin_src python
+#+begin_src ipython
 def abundant_numbers(n):
-    """Find all the abundant numbers less than `n'."""
+    """Find all the abundant numbers less than ``n``."""
     dsum = sum_divisors_sieve(n)
     return np.array([i for i, d in enumerate(dsum) if i<d])
 
@@ -223,15 +207,15 @@ assert(abundant_numbers(20)==[12,18]).all()
 Now that we have the abundant numbers, we simply need to sieve over the abundant
 numbers. Now, according to [[http://mathworld.wolfram.com/AbundantNumber.html][Wolfram Alpha]], the last number that we are searching
 for is actually 20161, so I'll cap our search at 20162. I reused the caching
-strategy from [[./project-euler-001.org::* 5 Smallest multiple][problem 5]] to save memory, this time using a =numpy.array= of
+strategy from problem 5 to save memory, this time using a =numpy.array= of
 =np.bool=. For each abundant number \(a<n\), I sliced our list of abundant
 numbers for all \(b<n-a\), and sliced the cache for all indices \(a+b\), setting
 the cache at those indices to =False=. Finally, I construct a =numpy.array=
 which contains all =i= such that =cache[i]= is =True=.
 
-#+begin_src python
+#+begin_src ipython
 def nonabundant_sums(n=20162):
-    """Find all the positive integers less than `n' which cannot be written as
+    """Find all the positive integers less than ``n`` which cannot be written as
     the sum of two abundant numbers."""
     n = 20162 if n>20162 else n
 
@@ -255,21 +239,14 @@ assert sum(nonabundant_sums(31))==411
 The final result is pretty fast. The most savings made are in the list slicing
 techniques from the =sum_divisors_sieve= and =nonabundant_sums= functions.
 
-#+begin_src python
+#+begin_src ipython
 print(sum(nonabundant_sums()))
-
-time = min(timeit.repeat(
-    "sum(nonabundant_sums())",
-    "from __main__ import nonabundant_sums",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit sum(nonabundant_sums())
 #+end_src
 
 #+RESULTS:
 : 4179871
-: t = 60.25 ms
+: 60.8 ms ± 242 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 24 Lexicographic permutations
 ** Q:
@@ -295,11 +272,13 @@ We want the fastest way to find the \(k\)th lexicographic permutation of these
 characters. First, consider how many permutations there are where \(a_0\) is the
 leading character. 
 
-\[ a_0 a_1 \ldots a_{n-2} a_{n-1} \\
-   a_0 a_1 \ldots a_{n-1} a_{n-2} \\
-   \ldots \\
-   a_0 a_{n-1} \ldots a_1 a_2 \\
-   a_0 a_{n-1} \ldots a_2 a_1 \]
+\begin{eqnarray*}
+a_0 a_1 \ldots a_{n-2} a_{n-1} \\
+a_0 a_1 \ldots a_{n-1} a_{n-2} \\
+\ldots \\
+a_0 a_{n-1} \ldots a_1 a_2 \\
+a_0 a_{n-1} \ldots a_2 a_1
+\end{eqnarray*}
 
 With \(a_0\) fixed, we have \(n-1\) more characters to permute, which gives
 \((n-1)!\) ways to order the remaining characters. If and only if
@@ -307,8 +286,9 @@ With \(a_0\) fixed, we have \(n-1\) more characters to permute, which gives
 also know the \((n-1)!+1\)th permutation must begin with \(a_1\) since it
 follows lexicographically.
 
-\[ p_{(n-1)!}   = a_0 a_{n-1} \ldots a_2 a_1 \\
-   p_{(n-1)!+1} = a_1 a_0 a_2 a_3 \ldots a_{n-2} a_{n-1} \]
+\[ p_{(n-1)!}   = a_0 a_{n-1} \ldots a_2 a_1 \]
+
+\[ p_{(n-1)!+1} = a_1 a_0 a_2 a_3 \ldots a_{n-2} a_{n-1} \]
 
 Again, there are \((n-1)!\) consecutive permutations where \(a_1\) is the
 leading character. In fact, for every \(a_i,i < n\), there are \((n-1)!\)
@@ -339,10 +319,10 @@ remainder after dividing by \((n-1)!\).
 Recursion is a crime against humanity, so here is the algorithm in a while loop,
 and tests for all the problem statement examples.
 
-#+begin_src python
+#+begin_src ipython
 def get_kth_permutation(char_list,k):
-    """Find the `k'th lexicographic permutation of a list of characters,
-    `char_list'."""
+    """Find the ``k``th lexicographic permutation of a list of characters,
+    ``char_list``."""
     if k<1 or k>factorial(len(char_list)):
         return None
     perm_list = []
@@ -369,21 +349,14 @@ assert get_kth_permutation([0,1,2],7) == None
 
 The final code runs in \(O(n)\), where \(n\) is the number of characters.
 
-#+begin_src python
+#+begin_src ipython
 print(get_kth_permutation(list(range(0,10)),1000000))
-
-time = min(timeit.repeat(
-    "get_kth_permutation(list(range(0,10)),1000000)",
-    "from __main__ import get_kth_permutation",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit get_kth_permutation(list(range(0,10)),1000000)
 #+end_src
 
 #+RESULTS:
 : [2, 7, 8, 3, 9, 1, 5, 4, 6, 0]
-: t = 4.89 us
+: 4 µs ± 31.5 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 25 1000-digit Fibonacci number
 ** Q:
@@ -416,7 +389,7 @@ digits?
 
 ** A:
 
-Way back in [[./project-euler-001.org::* 2 Even Fibonacci numbers][problem 2]] I covered the formula for the \(n\)th Fibonacci number.
+Consider the formula for the \(n\)th Fibonacci number.
 
 \[ F_n = \frac{\varphi^n-(-\varphi)^{-n}}{\sqrt{5}} \]
 
@@ -450,9 +423,9 @@ If we want a number above a lower bound \(L\), then \(F_n\geq L\).
                                                 {\ln\varphi} \rceil
 \end{eqnarray*}
 
-#+begin_src python
+#+begin_src ipython
 def fibonacci_above(limit):
-    """Find the index of the Fibonacci not below `limit'."""
+    """Find the index of the Fibonacci not below ``limit``."""
     phi = (1+sqrt(5))/2
     return ceil((log(5)/2+log(limit)) / log(phi))
 
@@ -464,21 +437,14 @@ assert fibonacci_above(100)==12
 
 The final run time is \(O(1)\).
 
-#+begin_src python
+#+begin_src ipython
 print(fibonacci_above(10**999))
-
-time = min(timeit.repeat(
-    "fibonacci_above(10**999)",
-    "from __main__ import fibonacci_above",
-    number=1000
-))*1000
-
-print("t = %.2f us" % time)
+%timeit fibonacci_above(10**999)
 #+end_src
 
 #+RESULTS:
 : 4782
-: t = 3.47 us
+: 3.32 µs ± 20.1 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 26 Reciprocal cycles
 ** Q:
@@ -520,18 +486,18 @@ pretty straightforward. However, what if \(1/d\) isn't repeating? Do we even
 need to find those? In fact, we don't. Any repeating decimal that doesn't have
 the above form won't be the longest, and \(d\) is always prime. What we are
 looking for are called the [[https://en.wikipedia.org/wiki/Full_reptend_prime][full reptend primes]]. A full reptend prime \(p\)
-produces a repeating decimal \(1\p=0.(a_1a_2\ldots a_{p-1})\), which is the
-longest possible repeating decimal sequence for any number, relative to its
+produces a repeating decimal \(1/p=0.(a_1a_2\ldots a_{p-1})\), which is the
+longest possible repeating decimal sequence for any reciprocal, relative to its
 size, of course.
 
 So in order to find the longest repeating reciprocal, we need to sieve the
-primes. I'll use the Sieve of Eratosthenes (see [[./project-euler-001.org::* 5 Smallest multiple][problem 5]]) to do so. Now to find
+primes. I'll use the Sieve of Eratosthenes (see [[file:001.org::* 5 Smallest multiple][problem 5]]) to do so. Now to find
 the longest repeating decimal, we simply must find the last full reptend prime
 below 1000. Note the special case \(n < 8\). Look back at the problem statement
 if it isn't clear why we need to add that.
 
-#+begin_src python
-from Euler import esieve
+#+begin_src ipython
+from euler import esieve
 
 def last_frp(n,primes=None):
     """Find the last full reptend prime less than ``n``. Optionally takes a list
@@ -559,39 +525,25 @@ assert last_frp(100)==97
 The algorithmic complexity should be the same as the Sieve of Eratosthenes,
 \(O(n\log\log n)\).
 
-#+begin_src python
+#+begin_src ipython
 print(last_frp(1000))
-
-time = min(timeit.repeat(
-    "last_frp(1000)",
-    "from __main__ import last_frp",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit last_frp(1000)
 #+end_src
 
 #+RESULTS:
 : 983
-: t = 6.05 ms
+: 5.94 ms ± 38.6 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 The complexity scales well to the higher upper bound given by [[https://www.hackerrank.com/contests/projecteuler/challenges/euler026/problem][hackerrank]].
 
-#+begin_src python
+#+begin_src ipython
 print(last_frp(10000))
-
-time = min(timeit.repeat(
-    "last_frp(10000)",
-    "from __main__ import last_frp",
-    number=1
-))*1000
-
-print("t = %.2f ms" % time)
+%timeit last_frp(10000)
 #+end_src
 
 #+RESULTS:
 : 9967
-: t = 508.74 ms
+: 509 ms ± 2.62 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
 
 * 27 Quadratic primes
 ** Q:
@@ -605,7 +557,7 @@ values \(0\leq n\leq39\). However, when \(n=40\), \(40^2+40+41=40(40+1)+41\) is
 divisible by 41, and certainly when \(n=41\),\(41^2+41+41\) is clearly divisible
 by 41.
 
-The incredible formula \(n^2−79n+1601\) was discovered, which produces 80 primes
+The incredible formula \(n^2-79n+1601\) was discovered, which produces 80 primes
 for the consecutive values \(0\leq n\leq79\). The product of the coefficients,
 −79 and 1601, is −126479.
 
@@ -640,8 +592,8 @@ Since \(b\) must be odd, \(b+1\) must be even, and \(a\) must be odd.
 Additionally, \(a > -b\). With our search space reduced, we simply must use
 brute force search to find the answer.
 
-#+begin_src python
-from Euler import esieve, is_prime
+#+begin_src ipython
+from euler import esieve, is_prime
 
 limit = 1000
 primes = esieve(limit+1)
@@ -704,7 +656,7 @@ c_4 & = & n^2 - 3(n-1) \\
 C   & = & 4n^2 - 6n + 6
 \end{eqnarray*}
 
-#+begin_src python
+#+begin_src ipython
 n = 1001
 count = 1
 for i in range(3,n+1,2):
@@ -714,6 +666,7 @@ print(count)
 
 #+RESULTS:
 : 669171001
+
 * 29 Distinct powers
 ** Q:
 
@@ -739,7 +692,7 @@ How many distinct terms are in the sequence generated by \(a^b\) for
 
 Easy by brute force and a set.
 
-#+begin_src python
+#+begin_src ipython
 powers = set()
 for a in range(2,101):
     for b in range(2,101):
@@ -756,11 +709,11 @@ print(len(powers))
 Surprisingly there are only three numbers that can be written as the sum of
 fourth powers of their digits:
 
-\[
+\begin{eqnarray*}
 1634 = 1^4 + 6^4 + 3^4 + 4^4 \\
 8208 = 8^4 + 2^4 + 0^4 + 8^4 \\
 9474 = 9^4 + 4^4 + 7^4 + 4^4 \\
-\]
+\end{eqnarray*}
 
 As \(1 = 1^4\) is not a sum it is not included.
 
@@ -801,7 +754,7 @@ cannot be solutions above 354294. Thus, we have a ceiling to iterate to.
 | 6 |  100000 | 354294 |
 | 7 | 1000000 | 413343 |
 
-#+begin_src python
+#+begin_src ipython
 def digit_power_sums(p):
     """Find all the numbers whose digits to the ``p``th power is that number."""
     N = []
@@ -824,12 +777,14 @@ assert digit_power_sums(4) == [1634, 8208, 9474]
 
 #+RESULTS:
 
-#+begin_src python
+#+begin_src ipython
 N = digit_power_sums(5)
 print(N)
 print(sum(N))
+%timeit digit_power_sums(5)
 #+end_src
 
 #+RESULTS:
 : [4150, 4151, 54748, 92727, 93084, 194979]
 : 443839
+: 492 ms ± 5.8 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
