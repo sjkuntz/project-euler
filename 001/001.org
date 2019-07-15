@@ -940,3 +940,25 @@ print(sum(esieve(2000000)))
 #+RESULTS:
 : 142913828922
 : 94.8 ms ± 595 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+I recently found out that there is a Sieve of Eratosthenes algorithm in the
+=sympy.ntheory= module. 
+
+//It turns out to be several orders of magnitude faster.
+Both implementations use the same core algorithm, but =sympy= makes extensive
+use of the =array= data structure, as well as using a prime wheel for the primes
+\(2\leq p\leq \sqrt{N}\). The =array= structure is just a wrapper on the C array
+structure, so anything done with python's =array= structure should outclass
+anything done with =list= structures.//
+
+NOTE: Turned out to be wrong once I started resetting the sieve on each
+iteration. 
+
+#+begin_src ipython
+from sympy import sieve
+sieve._reset()
+%timeit sieve._reset(); sieve.extend(2000000)
+#+end_src
+
+#+RESULTS:
+: 373 ms ± 10.5 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)

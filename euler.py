@@ -56,12 +56,10 @@ def prime_factors(n):
 
 # Problem 4
 def is_palindrome(n):
-    """Check if an integer ``n`` is a palindrome by converting it to a string."""
+    """Check if an integer ``n`` is a palindrome by converting it to a string...
+    """
     n_str = str(n)
-    for i in range(0, len(n_str)//2):
-        if n_str[i] != n_str[-(i+1)]:
-            return False
-    return True
+    return n_str == n_str[::-1]
 
 # Problem 5
 def lcm(a, b=None):

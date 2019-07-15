@@ -24,9 +24,129 @@ import timeit
 * 64
 ** Q:
 ** A:
-* 65
+* 65 Convergents of e
 ** Q:
+
+The square root of 2 can be written as an infinite continued fraction.
+
+\[ \sqrt{2} = 1+\frac{1}{2+\frac{1}{2+\frac{1}{2+\frac{1}{2+...}}}} \]
+
+The infinite continued fraction can be written, \(sqrt{2}=[1;(2)]\), \((2)\)
+indicates that 2 repeats ad infinitum. In a similar way,
+\(\sqrt{23}=[4;(1,3,1,8)]\).
+
+It turns out that the sequence of partial values of continued fractions for
+square roots provide the best rational approximations. Let us consider the
+convergents for \(\sqrt{2}\).
+
+\begin{eqnarray*}
+1+\frac{1}{2} & = & \frac{3}{2} \\
+1+\frac{1}{2+\frac{1}{2}} & = & \frac{7}{5} \\
+1+\frac{1}{2+\frac{1}{2+\frac{1}{2}}} & = & \frac{17}{12} \\
+1+\frac{1}{2+\frac{1}{2+\frac{1}{2+\frac{1}{2}}}} & = & \frac{41}{29}
+\end{eqnarray*}
+
+Hence the sequence of the first ten convergents for \(\sqrt{2}\) are:
+
+\[ 1, \frac{3}{2},\frac{7}{5},\frac{17}{12},\ldots \]
+
+What is most surprising is that the important mathematical constant,
+\(e=[2;1,2,1,1,4,1,1,6,1,\ldots,1,2k,1,\ldots]\).
+
+The first ten terms in the sequence of convergents for e are:
+
+\[ 2, 3, \frac{8}{3}, \frac{11}{4}, \frac{19}{7}, \frac{87}{32}, \ldots \]
+
+The sum of digits in the numerator of the 10th convergent is 1+4+5+7=17.
+
+Find the sum of digits in the numerator of the 100th convergent of the continued
+fraction for e.
+
 ** A:
+
+\begin{eqnarray*}
+2 & = & \frac{2}{1} \\
+2+\frac{1}{1} & = & \frac{3}{1} \\
+2+\frac{1}{1+\frac{1}{2}} & = & \frac{8}{3} \\
+2+\frac{1}{1+\frac{1}{2+\frac{1}{1}}} & = & \frac{11}{4} \\
+2+\frac{1}{1+\frac{1}{2+\frac{1}{1+\frac{1}{1}}}} & = & \frac{19}{7} \\
+2+\frac{1}{1+\frac{1}{2+\frac{1}{1+\frac{1}{1+\frac{1}{4}}}}} & = & \frac{87}{32}
+\end{eqnarray*}
+
+Like problem 57, there's a way to write the expansion such that the fractional
+form is more obvious. This one was a little harder to deduce. Consider the
+general form of a continued expansion.
+
+\[ x = b_0+\frac{1}{b_1+\frac{1}{b_2+\frac{1}{b_3+\frac{1}{b_4+\ldots}}}} \]
+
+I can derive an equation for the numerator and denominator with the following
+table.
+
+| \(n\) | \(N_n\)                          | \(D_n\)                 |
+|-------+----------------------------------+-------------------------|
+| \(1\) | \(b_0=N_1\)                      | \(1=D_1\)               |
+| \(2\) | \(b_0b_1+1=N_2\)                 | \(b_1=D_2\)             |
+| \(3\) | \(b_0b_1b_2+b_2+b_0=b_2N_2+N_1\) | \(b_1b_2+1=b_2D_2+D_1\) |
+| \(4\) | \(b_0b_1b_2b_3+b_0b_1+b_0b_3=b_3N_3+N_2\) | \(b_1b_2b_3+b_1+b_3=b_3D_3+D_2\) |
+
+So in terms of numerators and denominators,
+
+\[ x = \lim_{n\rightarrow\infty} \frac{N_n}{D_n} \]
+
+where
+
+\begin{eqnarray*}
+N_1     & = & b_0 \\
+N_2     & = & b_0b_1+1 \\
+N_{n+1} & = & b_nN_n+N_{n-1} \\
+D_1     & = & 1 \\
+D_2     & = & b_1 \\
+D_{n+1} & = & b_nD_n+D_{n-1}
+\end{eqnarray*}
+
+So for \(e\) we'll use
+
+\[ b_n = \begin{cases}
+2        & n = 0 \\
+2(n+1)/3 & 0\equiv n+1 \mod3 \\
+1        & \text{otherwise}
+\end{cases} \]
+
+#+begin_src ipython
+def pe065(n,b):
+    """Find the numerator and denominator for a simple fraction expansion of
+    ``n`` iterations, where coefficients are specified by the anonymous function
+    ``b``.
+    """
+    N, D = ([b(0), b(0)*b(1)+1], [1, b(1)])
+    for i in range(2,n):
+        N += [b(i)*N[-1]+N[-2]]
+        D += [b(i)*D[-1]+D[-2]]
+    return N, D
+
+b = lambda x: 2*(x+1)//3 if (x+1)%3==0 else (2 if x==0 else 1)
+N, D = pe065(10,b)
+assert N == [2, 3, 8, 11, 19, 87, 106, 193, 1264, 1457]
+assert D == [1, 1, 3, 4, 7, 32, 39, 71, 465, 536]
+#+end_src
+
+#+RESULTS:
+
+The final algorithm runs in linear time.
+
+#+begin_src ipython
+print(sum(map(int,str(pe065(100,b)[0][-1]))))
+%timeit sum(map(int,str(pe065(100,b)[0][-1])))
+print(sum(map(int,str(pe065(10000,b)[0][-1]))))
+%timeit sum(map(int,str(pe065(10000,b)[0][-1])))
+#+end_src
+
+#+RESULTS:
+: 272
+: 53.3 µs ± 707 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+: 55322
+: 43.9 ms ± 391 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
 * 66
 ** Q:
 ** A:
