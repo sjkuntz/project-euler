@@ -1,22 +1,19 @@
 #+TITLE: Project Euler solutions (#21-30)
 #+AUTHOR: Steven Kuntz
-#+EMAIL: skuntz@ucsb.edu
+#+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
-#+PROPERTY: header-args:ipython :session *python*
-#+PROPERTY: header-args :results output :exports both
+#+PROPERTY: header-args:jupyter-python :session py :results raw drawer
 
 Initialize Python session with imports.
 
-#+begin_src ipython :results none
-from bitarray import bitarray
+#+begin_src jupyter-python :results none
+from array import array
+from itertools import combinations_with_replacement
 import numpy as np
-from math import ceil, factorial, log, log10, sqrt
-import timeit
+from math import ceil, factorial, log, log2, log10, sqrt
 #+end_src
 
 * 21 Amicable numbers
-** Q:
-
 Let d(n) be defined as the sum of proper divisors of n (numbers less than n
 which divide evenly into n).
 
@@ -30,14 +27,13 @@ and 110; therefore d(220) = 284. The proper divisors of 284 are 1, 2, 4, 71 and
 Evaluate the sum of all the amicable numbers under 10000.
 
 ** A:
-
 This is actually a fairly straightforward problem if we have some way to look up
 the sum of divisors for any number less than our upper limit. Firstly, we need
 some way to sieve for the sum of divisors. The follow function accomplishes this
 by iterating over all the divisors, adding itself and its quotient at all the
 multiples.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def sum_divisors_sieve(n,proper=True):
     """Sieve for the sum of proper divisors for natural numbers less than ``n``.
     Optionally, we can include the number itself with ``proper=False``."""
@@ -65,41 +61,30 @@ problem statement, let's define the amicable pair =(b,a)= as
 3) =a>b=
 
 Using this definition, we make sure to avoid counting perfect numbers, and make
-sure that every pair we return is unique. The function returns a list of tuples.
-I realize this is awkward to sum up later, but I felt it followed the
-mathematics more closely to do it that way.
+sure that every pair we return is unique.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def amicable_pairs(n):
     """Find all the amicable pairs less than ``n``."""
     dsum = sum_divisors_sieve(n)
     pairs = []
     for a in range(1,n):
-        if a>dsum[a]:
-            if dsum[dsum[a]]==a:
-                pairs += [(dsum[a],a)]
+        if a>dsum[a] and dsum[dsum[a]]==a:
+            pairs += [dsum[a],a]
     return pairs
 
 assert amicable_pairs(284)==[]
-assert amicable_pairs(285)[0]==(220,284)
-#+end_src
+assert amicable_pairs(285)==[220,284]
 
-#+RESULTS:
-
-We finally have to sum up all the numbers in the list of tuples.
-
-#+begin_src ipython
-print(sum([sum(pair) for pair in amicable_pairs(10000)]))
-%timeit sum([sum(pair) for pair in amicable_pairs(10000)])
+print(sum(amicable_pairs(10000)))
+%timeit sum(amicable_pairs(10000))
 #+end_src
 
 #+RESULTS:
 : 31626
-: 4.11 ms ± 26.8 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+: 4.21 ms ± 60.7 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 22 Names scores
-** Q:
-
 Using names.txt (right click and 'Save Link/Target As...'), a 46K text file
 containing over five-thousand first names, begin by sorting it into alphabetical
 order. Then working out the alphabetical value for each name, multiply this
@@ -112,10 +97,9 @@ obtain a score of 938 × 53 = 49714.
 What is the total of all the name scores in the file?
 
 ** A:
-
 I hate text problems. We'll read this file into a =numpy.array= of strings.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def read_words(filename):
     """Read a list of words from file."""
     with open(filename) as file:
@@ -129,7 +113,7 @@ def read_words(filename):
 
 We need a way to find the alphabetical value of a word or list of words
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def alphabetical_value(word):
     """Get the alphabetical value for a word or list of words."""
     if isinstance(word, str):
@@ -148,7 +132,7 @@ assert (alphabetical_value(["Bob", "Alice"]) == [19, 30]).all()
 Since our names are in a =numpy.array=, sorting is trivial. Given that, multiply
 their alphabetical value by their index and print the total.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 names = np.sort(read_words("022.txt"))
 print(sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))))
 
@@ -160,8 +144,6 @@ print(sum(np.multiply(alphabetical_value(names),np.arange(1,len(names)+1))))
 : 6.51 ms ± 58.1 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
 * 23 Non-abundant sums
-** Q:
-
 A perfect number is a number for which the sum of its proper divisors is exactly
 equal to the number. For example, the sum of the proper divisors of 28 would be
 1 + 2 + 4 + 7 + 14 = 28, which means that 28 is a perfect number.
@@ -181,7 +163,6 @@ Find the sum of all the positive integers which cannot be written as the sum of
 two abundant numbers.
 
 ** A:
-
 This problem stands out among the Euler problems because it does not scale. In
 fact, it can't scale. It says so in the problem statement. "All integers greater
 than 28123 can be written as the sum of two abundant numbers." Given this, we
@@ -191,7 +172,7 @@ divisors sieve from problem 21. We can also use a similar strategy for the
 deficient numbers and perfect numbers if we so desire, but that is beyond the
 scope of the problem at hand.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def abundant_numbers(n):
     """Find all the abundant numbers less than ``n``."""
     dsum = sum_divisors_sieve(n)
@@ -213,7 +194,7 @@ numbers for all \(b<n-a\), and sliced the cache for all indices \(a+b\), setting
 the cache at those indices to =False=. Finally, I construct a =numpy.array=
 which contains all =i= such that =cache[i]= is =True=.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def nonabundant_sums(n=20162):
     """Find all the positive integers less than ``n`` which cannot be written as
     the sum of two abundant numbers."""
@@ -232,25 +213,16 @@ assert sum(nonabundant_sums(24))==276
 assert sum(nonabundant_sums(25))==276
 assert sum(nonabundant_sums(30))==411
 assert sum(nonabundant_sums(31))==411
-#+end_src
 
-#+RESULTS:
-
-The final result is pretty fast. The most savings made are in the list slicing
-techniques from the =sum_divisors_sieve= and =nonabundant_sums= functions.
-
-#+begin_src ipython
 print(sum(nonabundant_sums()))
 %timeit sum(nonabundant_sums())
 #+end_src
 
 #+RESULTS:
 : 4179871
-: 60.8 ms ± 242 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+: 66.7 ms ± 2.86 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 24 Lexicographic permutations
-** Q:
-
 A permutation is an ordered arrangement of objects. For example, 3124 is one
 possible permutation of the digits 1, 2, 3 and 4. If all of the permutations are
 listed numerically or alphabetically, we call it lexicographic order. The
@@ -262,7 +234,6 @@ What is the millionth lexicographic permutation of the digits 0, 1, 2, 3, 4, 5,
 6, 7, 8 and 9?
 
 ** A:
-
 To solve this with brute force, we would iterate up to the \(k\)th permutation.
 That's \(O(k)\) in run time, which is \(O(n!)\) for the worst case. However,
 there's a combinatoric shortcut that lets us do this in \(O(n)\) time. I could
@@ -319,12 +290,13 @@ remainder after dividing by \((n-1)!\).
 Recursion is a crime against humanity, so here is the algorithm in a while loop,
 and tests for all the problem statement examples.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def get_kth_permutation(char_list,k):
     """Find the ``k``th lexicographic permutation of a list of characters,
     ``char_list``."""
     if k<1 or k>factorial(len(char_list)):
         return None
+    char_list = char_list.copy()
     perm_list = []
     while len(char_list)>1 and k>1:
         fact = factorial(len(char_list)-1)
@@ -335,32 +307,26 @@ def get_kth_permutation(char_list,k):
     perm_list += char_list
     return perm_list
 
-assert get_kth_permutation([0,1,2],0) is None
-assert get_kth_permutation([0,1,2],1) == [0,1,2]
-assert get_kth_permutation([0,1,2],2) == [0,2,1]
-assert get_kth_permutation([0,1,2],3) == [1,0,2]
-assert get_kth_permutation([0,1,2],4) == [1,2,0]
-assert get_kth_permutation([0,1,2],5) == [2,0,1]
-assert get_kth_permutation([0,1,2],6) == [2,1,0]
-assert get_kth_permutation([0,1,2],7) == None
+CL = [0,1,2]
+assert get_kth_permutation(CL,0) is None
+assert get_kth_permutation(CL,1) == [0,1,2]
+assert get_kth_permutation(CL,2) == [0,2,1]
+assert get_kth_permutation(CL,3) == [1,0,2]
+assert get_kth_permutation(CL,4) == [1,2,0]
+assert get_kth_permutation(CL,5) == [2,0,1]
+assert get_kth_permutation(CL,6) == [2,1,0]
+assert get_kth_permutation(CL,7) == None
+
+CL = list(range(0,10))
+print(''.join(str(d) for d in get_kth_permutation(CL,1000000)))
+%timeit get_kth_permutation(CL,1000000)
 #+end_src
 
 #+RESULTS:
-
-The final code runs in \(O(n)\), where \(n\) is the number of characters.
-
-#+begin_src ipython
-print(get_kth_permutation(list(range(0,10)),1000000))
-%timeit get_kth_permutation(list(range(0,10)),1000000)
-#+end_src
-
-#+RESULTS:
-: [2, 7, 8, 3, 9, 1, 5, 4, 6, 0]
-: 4 µs ± 31.5 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
+: 2783915460
+: 3.75 µs ± 50.3 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 25 1000-digit Fibonacci number
-** Q:
-
 The Fibonacci sequence is defined by the recurrence relation:
 
 \(F_n = F_{n−1} + F_{n−2}\), where \(F_1 = 1\) and \(F_2 = 1\).
@@ -388,7 +354,6 @@ What is the index of the first term in the Fibonacci sequence to contain 1000
 digits?
 
 ** A:
-
 Consider the formula for the \(n\)th Fibonacci number.
 
 \[ F_n = \frac{\varphi^n-(-\varphi)^{-n}}{\sqrt{5}} \]
@@ -423,7 +388,7 @@ If we want a number above a lower bound \(L\), then \(F_n\geq L\).
                                                 {\ln\varphi} \rceil
 \end{eqnarray*}
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def fibonacci_above(limit):
     """Find the index of the Fibonacci not below ``limit``."""
     phi = (1+sqrt(5))/2
@@ -431,24 +396,16 @@ def fibonacci_above(limit):
 
 assert fibonacci_above(10)==7
 assert fibonacci_above(100)==12
-#+end_src
 
-#+RESULTS:
-
-The final run time is \(O(1)\).
-
-#+begin_src ipython
 print(fibonacci_above(10**999))
 %timeit fibonacci_above(10**999)
 #+end_src
 
 #+RESULTS:
 : 4782
-: 3.32 µs ± 20.1 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
+: 3.54 µs ± 219 ns per loop (mean ± std. dev. of 7 runs, 100000 loops each)
 
 * 26 Reciprocal cycles
-** Q:
-
 A unit fraction contains 1 in the numerator. The decimal representation of the
 unit fractions with denominators 2 to 10 are given:
 
@@ -469,34 +426,14 @@ Find the value of d < 1000 for which 1/d contains the longest recurring cycle in
 its decimal fraction part.
 
 ** A:
+What we are looking for are called the [[http://mathworld.wolfram.com/FullReptendPrime.html][full reptend primes]]. A primes \(p\) is 
+called a full reptend prime if and only if
 
-Let \(1/d\) be a unit fraction that contains a repeating cycle
-with a period \(n\)-digits long. Let's say we know \(d\) but want to know what
-and how long the cycle is.
+\[ 10^k \equiv 1 \mod p \]
 
-\begin{eqnarray*}
-       1/d & = & 0.(a_1a_2\ldots a_n) \\
-    10^n/d & = & a_1a_2\ldots a_n.(a_1a_2\ldots a_n) \\
-(10^n-1)/d & = & a_1a_2\ldots a_n
-\end{eqnarray*}
+for \(k=p-1\) and no \(0 < k < p-1\).
 
-We don't know \(n\), but we know that \(a_1a_2\ldots a_n\) must be an integer.
-Therefore, we need to find the smallest \(n\) such that \(d|10^n-1\). This is
-pretty straightforward. However, what if \(1/d\) isn't repeating? Do we even
-need to find those? In fact, we don't. Any repeating decimal that doesn't have
-the above form won't be the longest, and \(d\) is always prime. What we are
-looking for are called the [[https://en.wikipedia.org/wiki/Full_reptend_prime][full reptend primes]]. A full reptend prime \(p\)
-produces a repeating decimal \(1/p=0.(a_1a_2\ldots a_{p-1})\), which is the
-longest possible repeating decimal sequence for any reciprocal, relative to its
-size, of course.
-
-So in order to find the longest repeating reciprocal, we need to sieve the
-primes. I'll use the Sieve of Eratosthenes (see [[file:001.org::* 5 Smallest multiple][problem 5]]) to do so. Now to find
-the longest repeating decimal, we simply must find the last full reptend prime
-below 1000. Note the special case \(n < 8\). Look back at the problem statement
-if it isn't clear why we need to add that.
-
-#+begin_src ipython
+#+begin_src jupyter-python
 from euler import esieve
 
 def last_frp(n,primes=None):
@@ -510,44 +447,25 @@ def last_frp(n,primes=None):
         primes = esieve(n)
 
     for p in primes[::-1]:
-        period = 1
-        while (10**period-1)%p!=0:
-            period += 1
-        if p-1 == period:
-            return p
+        if p < n:
+            period = 1
+            while pow(10,period,p) != 1:
+                period += 1
+            if p-1 == period:
+                return p
 
 assert last_frp(10)==7
 assert last_frp(100)==97
-#+end_src
 
-#+RESULTS:
-
-The algorithmic complexity should be the same as the Sieve of Eratosthenes,
-\(O(n\log\log n)\).
-
-#+begin_src ipython
 print(last_frp(1000))
 %timeit last_frp(1000)
 #+end_src
 
 #+RESULTS:
 : 983
-: 5.94 ms ± 38.6 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
-
-The complexity scales well to the higher upper bound given by [[https://www.hackerrank.com/contests/projecteuler/challenges/euler026/problem][hackerrank]].
-
-#+begin_src ipython
-print(last_frp(10000))
-%timeit last_frp(10000)
-#+end_src
-
-#+RESULTS:
-: 9967
-: 509 ms ± 2.62 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+: 1.43 ms ± 45.6 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
 
 * 27 Quadratic primes
-** Q:
-
 Euler discovered the remarkable quadratic formula:
 
 \[ n^2+n+41 \]
@@ -563,7 +481,7 @@ for the consecutive values \(0\leq n\leq79\). The product of the coefficients,
 
 Considering quadratics of the form:
 
-\(n2+an+b\), where \(|a| < 1000\) and \(|b|\leq1000\)
+\(n^2+an+b\), where \(|a| < 1000\) and \(|b|\leq1000\)
 
 where \(|n|\) is the modulus/absolute value of \(n\)
 e.g. \(|11|=11\) and \(|−4|=4\)
@@ -573,7 +491,6 @@ expression that produces the maximum number of primes for consecutive values of
 \(n\), starting with \(n=0\).
 
 ** A:
-
 For \(n=0\), we have
 
 \begin{eqnarray*}
@@ -592,43 +509,45 @@ Since \(b\) must be odd, \(b+1\) must be even, and \(a\) must be odd.
 Additionally, \(a > -b\). With our search space reduced, we simply must use
 brute force search to find the answer.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from euler import esieve, is_prime
 
-limit = 1000
-primes = esieve(limit+1)
-nmax = 0
-for b in primes:
-    for a in range(-b+2,limit,2):
-        n = 1
-        while is_prime(n*n + a*n + b):
-            n += 1
-        n += -1
-        if n >= nmax:
-            nmax = n
-            p = (a,b)
+def pe027(limit=1000):
+    primes = esieve(limit+1)
+    nmax = 0
+    for b in primes:
+        for a in range(-b+2,limit,2):
+            n = 1
+            while is_prime(n*n + a*n + b):
+                n += 1
+            n += -1
+            if n >= nmax:
+                nmax = n
+                p = (a,b)
+    return p
 
-print(nmax, p)
+p = pe027()
+print(p)
 print(p[0]*p[1])
+%timeit pe027()
 #+end_src
 
 #+RESULTS:
-: 71 (-61, 971)
+: (-61, 971)
 : -59231
+: 83.2 ms ± 800 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
 * 28 Number spiral diagonals
-** Q:
-
 Starting with the number 1 and moving to the right in a clockwise direction a 5
 by 5 spiral is formed as follows:
 
-#+begin_src org :execute nil
+#+begin_example
 21 22 23 24 25
 20  7  8  9 10
 19  6  1  2 11
 18  5  4  3 12
 17 16 15 14 13
-#+end_src
+#+end_example
 
 It can be verified that the sum of the numbers on the diagonals is 101.
 
@@ -639,8 +558,7 @@ in the same way?
 
 Notice how the top right corner of each minor square is the square of an odd
 integer (\(1^2,3^2,5^2,\ldots\)) corresponding to the size of the square. So if
-we consider an arbitrary \(n\times n\) spiral matrix, we can write all of the
-corner values in terms of the size.
+we consider an arbitrary \(n\times n\) spiral matrix,
 
 \[\begin{bmatrix}
     c_2    & \dots  & c_1    \\
@@ -648,28 +566,81 @@ corner values in terms of the size.
     c_3    & \dots  & c_4 
   \end{bmatrix} \]
 
-\begin{eqnarray*}
-c_1 & = & n^2 \\
-c_2 & = & n^2 - (n-1) \\
-c_3 & = & n^2 - 2(n-1) \\
-c_4 & = & n^2 - 3(n-1) \\
-C   & = & 4n^2 - 6n + 6
+we can write all of the corner values in terms of the size,
+\(n > 1, n \equiv 1 \mod 2\). Additionally, we can write the sum of these
+corners, \(C_n\), in terms of the size.
+
+5\begin{eqnarray*}
+c_{n,1} & = & n^2 \\
+c_{n,2} & = & n^2 - (n-1) \\
+c_{n,3} & = & n^2 - 2(n-1) \\
+c_{n,4} & = & n^2 - 3(n-1) \\
+C_n     & = & 4n^2 - 6n + 6
 \end{eqnarray*}
 
-#+begin_src ipython
-n = 1001
-count = 1
-for i in range(3,n+1,2):
-    count += 4*i*i - 6*i + 6
-print(count)
+We have to recognize the special case, \(C_1 = 1\). For an arbitrary square of
+size \(n\equiv1\mod2\), the diagonal total, \(D_n\), is
+
+\begin{eqnarray*}
+D_n & = & 1 + \sum_{i\in\{3,5,\ldots,n\}} \left( 4i^2 - 6i + 6 \right) \\
+    & = & 1 - 4 + \sum_{i\in\{1,3,5,\ldots,n\}} \left( 4i^2 - 6i + 6 \right) \\
+    & = & 3(n+1) - 3 + \sum_{i\in\{1,3,5,\ldots,n\}} \left( 4i^2 - 6i\right) \\
+    & = & 3n + 4\left(\sum_{i\in\{1,3,5,\ldots,n\}} i^2\right) - 6\left(\sum_{i\in\{1,3,5,\ldots,n\}} i\right) \\
+\end{eqnarray*}
+
+The second sum looks like an odd version of the [[https://en.wikipedia.org/wiki/Triangular_number][triangular numbers]].
+
+\begin{eqnarray*}
+\sum_{i\in\{1,3,5,\ldots,n\}} i 
+& = & \sum_{i=1}^n i - \sum_{i\in\{2,4,6,\ldots,n-1\}} i \\
+& = & \sum_{i=1}^n i -  \sum_{i=1}^{(n-1)/2} 2i \\
+& = & T_n -  2T_{(n-1)/2} \\
+& = & \frac{n(n+1)}{2} -  2\frac{((n-1)/2)((n+1)/2)}{2} \\
+& = & \frac{2n^2+2n}{4} - \frac{n^2-1}{4} \\
+& = & \frac{n^2+2n+1}{4} \\
+& = & \left(\frac{n+1}{2}\right)^2 \\
+\end{eqnarray*}
+
+The first sum looks like an odd version of the [[https://en.wikipedia.org/wiki/Square_pyramidal_number][square pyramidal numbers]].
+
+\begin{eqnarray*}
+\sum_{i\in\{1,3,5,\ldots,n\}} i^2
+& = & \sum_{i=1}^n i^2 - \sum_{i\in\{2,4,6,\ldots,n-1\}} i^2 \\
+& = & \sum_{i=1}^n i^2 - \sum_{i=1}^{(n-1)/2} (2i)^2 \\
+& = & P_n - 4P_{(n-1)/2} \\
+& = & \frac{n(n+1)(2n+1)}{6} -  4\frac{((n-1)/2)((n+1)/2)(n-1+1)}{6} \\
+& = & \frac{2n^3+3n^2+n}{6} - \frac{n^3-n}{6} \\
+& = & \frac{n^3+3n^2+2n}{6} \\
+& = & \frac{n(n+1)(n+2)}{6} \\
+\end{eqnarray*}
+
+And the final formula is
+
+\begin{eqnarray*}
+D_n & = & 3n + 4\left(\frac{n^3+3n^2+2n}{6}\right) - 6\left(\frac{n^2+2n+1}{4}\right) \\
+    & = & \frac{18n}{6} + \frac{4n^3+12n^2+8n}{6} - \frac{9n^2+18n+9}{6} \\
+    & = & \frac{4n^3+3n^2+8n-9}{6} \\
+    & = & \frac{n(n(4n+3)+8)-9}{6} 
+\end{eqnarray*}
+
+where the last expression was derived from WolframAlpha.
+
+#+begin_src jupyter-python
+def pe028(n):
+    return (n*(n*(4*n+3)+8)-9)//6
+
+assert pe028(3) == 25
+assert pe028(5) == 101
+
+print(pe028(1001))
+%timeit pe028(1001)
 #+end_src
 
 #+RESULTS:
 : 669171001
+: 208 ns ± 6.56 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 
 * 29 Distinct powers
-** Q:
-
 Consider all integer combinations of \(a^b\) for \(2\leq a\leq5\) and
 \(2\leq b\leq5\):
 
@@ -689,10 +660,9 @@ How many distinct terms are in the sequence generated by \(a^b\) for
 \(2\leq a\leq100\) and \(2\leq b\leq100\)?
 
 ** A:
-
 Easy by brute force and a set.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 powers = set()
 for a in range(2,101):
     for b in range(2,101):
@@ -703,9 +673,67 @@ print(len(powers))
 #+RESULTS:
 : 9183
 
-* 30 Digit fifth powers
-** Q:
+The brute force solution is fine for Project Euler, but the HackerRank version
+has much more difficult test cases. 
 
+The only way to assure that our terms are unique is to express them in terms of
+irreducible bases. Let \(S=\{a^b:a,b\in\{2,...,n\}\}\). Consider \(a^b\in S\)
+where \(a\) is not a perfect power. Then \(a^b=(a'^k)^b=a'^{kb}\). The
+representation is not unique. Therefore, the representation \(a^b\) is unique if
+and only if there are no integers \(a',k\) such that \(a=a'^k\).
+
+With this in mind, I first build a set of all the perfect powers. Second, I
+build a dictionary where keys are the maximum possible \(k\) of an irreducible
+base and the values are the number of \(kb\) that are valid for that maximum
+\(k\). Lastly, for each base that is not a perfect power, I add to a running
+total the number of valid \(kb\), where \(k=\lfloor\log_a n\rfloor\).
+
+#+begin_src jupyter-python
+def pe029(n):
+    pp = set()
+    for a in range(2,int(n**0.5)+1):
+        b, c = (2, pow(a,2))
+        while c <= n:
+            pp.add(c)
+            b, c = (b+1, pow(a,b+1))
+
+    exp = {1:set(range(2,n+1))}
+    for k in range(2,ceil(log2(n))):
+        exp[k] = set(range(2*k,n*k+1,k))
+        exp[k] = exp[k].union(exp[k-1])
+    for k in range(1,ceil(log2(n))):
+        exp[k] = len(exp[k])
+
+    count = 0
+    for a in range(2,n+1):
+        if a not in pp:
+            count += exp[int(log(n,a))]
+
+    return count
+
+assert pe029(5) == 15
+print(pe029(100))
+%timeit pe029(100)
+#+end_src
+
+#+RESULTS:
+: 9183
+: 60.5 µs ± 642 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+This method is the only efficient way I found to do large limits. Note that for
+some specific \(n\), floating point error in =log(n,a)= results in the wrong
+answer.
+
+#+begin_src jupyter-python
+print(pe029(100000))
+%timeit pe029(100000)
+#+end_src
+
+#+RESULTS:
+: 9981236306
+: 381 ms ± 7.31 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+* 30 Digit fifth powers
 Surprisingly there are only three numbers that can be written as the sum of
 fourth powers of their digits:
 
@@ -723,68 +751,65 @@ Find the sum of all the numbers that can be written as the sum of fifth powers
 of their digits.
 
 ** A:
+At first, I had generated bounds for the number and checked if every number in
+those bounds were equal to the fifth power of their digits. This was fine for
+PE, but HackerRank asks for sixth powers, which timed out the old
+implementation. My new method also uses bounds to restrict the search space, but
+instead of checking through every number in the bounds, I check combinations of
+digits.
 
-This won't be difficult once we know a range of candidate numbers. Let \(N\) be
-an \(n\) digit number.
+Let \(N\) be an \(n\) digit number.
 
 \[ 10^{n-1} \leq N < 10^n \]
 
-And let the sum of the fifth powers of the digits be equal to \(N\).
+And let the sum of the \(3\leq p\leq 6\) powers of the digits be equal to \(N\).
 
-\[ N = d_1d_2\dots d_n = d_1^5 + d_2^5 + \dots + d_n^5 \]
+\[ N = d_1d_2\dots d_n = d_1^p + d_2^p + \dots + d_n^p \]
 
 A digit can only take values \(0,1,\dots,9\) so that enforces another upper
 bound.
 
-\[ N \leq n(9^5) = 59049n \]
+\[ N \leq n(9^p) \]
 
-And we get a new range for \(N\).
+For now, we've fixed the digits. But these can change. We know \(n\geq2\) from
+the problem statement. We also know that \(O(10^{n-1}) > O(n(9^p))\). Therefore,
+there will be some \(n'\) that results in \(n'(9^p)\leq10^{n'-1}\). There can be
+no candidates that are \(n'\) digits long. 
 
-\[ 10^{n-1} \leq N \leq 59049n \]
+With this information, the problem is solved in two steps. First, I iterate
+through \(n\) until I find the first \(n'\). Then, I iterate through
+\(n=2,\ldots,n-1\), and for each length of digits iterate through the
+combinations, with replacement, of \(2\leq n < n'\) digits to their \(p\)
+powers. With =str= sorting and comparison, hits are easy to check.
 
-Looking at a table of values for the bounds of \(N\), it is clear that there
-cannot be solutions above 354294. Thus, we have a ceiling to iterate to.
-
-| n |   lower |  upper |
-|---+---------+--------|
-| 2 |      10 | 118098 |
-| 3 |     100 | 177147 |
-| 4 |    1000 | 236196 |
-| 5 |   10000 | 295245 |
-| 6 |  100000 | 354294 |
-| 7 | 1000000 | 413343 |
-
-#+begin_src ipython
-def digit_power_sums(p):
+#+begin_src jupyter-python
+def pe030(p):
     """Find all the numbers whose digits to the ``p``th power is that number."""
-    N = []
-    power = [i**p for i in range(0,10)]
+    numbers = []
+    power = [i**p for i in range(10)]
 
-    n = 2
-    limit = n*power[-1]
-    while 10**(n-1) < limit:
-        n += 1
-        limit = n*power[-1]
+    nmax = 2
+    limit = nmax*power[-1]
+    while 10**(nmax-1) < limit:
+        nmax += 1
+        limit = nmax*power[-1]
 
-    for i in range(10,limit+1):
-        if sum([power[int(d)] for d in str(i)]) == i:
-            N += [i]
+    for n in range(2,nmax):
+        for c in combinations_with_replacement(range(10),n):
+            n = sum([power[d] for d in c])
+            n_str = str(n)
+            if n > 0 and len(n_str) == len(c):
+                if ''.join(sorted(n_str)) == ''.join(map(str, c)):
+                    numbers += [n]
 
-    return N
+    return sorted(numbers)
 
-assert digit_power_sums(4) == [1634, 8208, 9474]
-#+end_src
+assert pe030(4) == [1634, 8208, 9474]
 
-#+RESULTS:
-
-#+begin_src ipython
-N = digit_power_sums(5)
-print(N)
-print(sum(N))
-%timeit digit_power_sums(5)
+print(pe030(5))
+%timeit pe030(5)
 #+end_src
 
 #+RESULTS:
 : [4150, 4151, 54748, 92727, 93084, 194979]
-: 443839
-: 492 ms ± 5.8 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+: 21.8 ms ± 364 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)

@@ -9,7 +9,7 @@ problems.
 from functools import reduce
 from math import log
 
-from bitarray import bitarray
+from array import array
 import numpy as np
 
 # Problems 1, 6, 12
@@ -17,16 +17,6 @@ def triangular(n):
     """Find the ``n``th triangular number.
 
     ``T_n = 1 + 2 + ... + n``
-
-    Parameters
-    ----------
-    n : int
-        index
-
-    Returns
-    -------
-    T_n :
-        returns the ``n``th triangular number
     """
     return n*(n+1)//2
 
@@ -35,10 +25,6 @@ def prime_factors(n):
     """Find the prime factors of ``n``. Returns only primes, not their
     exponents.
     """
-    # if there are no prime factors, or if n is negative, return `None'
-    if n <= 1:
-        return None
-
     p = []
     for f in [2, 3]:
         if n%f == 0:
@@ -46,103 +32,58 @@ def prime_factors(n):
             while n%f == 0:
                 n //= f
     f = 5
-    while f <= n:
+    while f*f < n:
         if n%f == 0:
             p += [f]
             while n%f == 0:
                 n //= f
         f += 2 if f%6 > 1 else 4
+    if n > 1:
+        p += [n]
     return p
+
 
 # Problem 4
 def is_palindrome(n):
-    """Check if an integer ``n`` is a palindrome by converting it to a string...
+    """Check if an integer ``n`` is a palindrome by converting it to a string
     """
     n_str = str(n)
     return n_str == n_str[::-1]
 
 # Problem 5
 def lcm(a, b=None):
-    """Find the least common multiple of a list of integers, recursively.
-
-    Parameters
-    ----------
-    a : int or array-like
-        either the first integer argument, or a list of integers to be called on
-        recursively
-
-    b : int
-        an argument for the second integer
-
-    Returns
-    -------
-    multiple : int
-        returns the lcm of the list or arguments
-    """
+    """Find the least common multiple of a list of integers, recursively."""
     return reduce(lcm, a) if b is None else a*b//gcd(a, b)
 
-# Problems 5, 8
+# Problems 8
 def gcd(a, b):
-    """Find the greatest common divisor of two integers.
-
-    Parameters
-    ----------
-    a : int or array-like
-        an argument for the first integer
-
-    b : int
-        an argument for the second integer
-
-    Returns
-    -------
-    divisor : int
-        returns the gcd of the arguments
-    """
+    """Find the greatest common divisor of two integers."""
     while b != 0:
         (a, b) = (b, a%b)
     return a
 
 # Problems 5, 10, 26
 def esieve(n):
-    """Find all primes less than ``n`` with the Sieve of Eratosthenes. Saves
-    memory by using a ``bitarray`` to store whether or not an integer is prime.
-
-    Parameters
-    ----------
-    n : int
-        Upper bound
-
-    Returns
-    -------
-    primes :
-        returns a list of primes
-    """
+    """Find all primes less than ``n`` with the Sieve of Eratosthenes."""
     if n <= 2:
-        return np.array([])
+        return array('l', [])
 
-    isprime = bitarray(n//2)
-    isprime.setall(True)
-
+    isprime = array('b', [True]*(n//2))
     for k in range(3, int(n**0.5)+1, 2):
         if isprime[k//2]:
-            isprime[k*k//2::k] = False
+            for i in range(k*k//2, n//2, k):
+                isprime[i] = False
 
-    return np.array([2] + [2*i+1 for i in range(1, n//2) if isprime[i]], dtype=int)
+    primes = array('l', [2])
+    for i in range(1, n//2):
+        if isprime[i]:
+            primes.append(2*i+1)
+    return primes
+
 
 # Problem 7
 def prime_bounds(n):
-    """Find the lower and upper bounds of the ``n``th prime.
-
-    Parameters
-    ----------
-    n : int
-        Upper bound
-
-    Returns
-    -------
-    bounds : list, length = 2
-        returns the upper and lower bound for the ``n``th prime
-    """
+    """Find the lower and upper bounds of the ``n``th prime."""
     if n < 6:
         return [1, 14]
     lim = log(n)+log(log(n))
@@ -175,7 +116,8 @@ def pythagorean_triples_from_sum(s):
 
 # Problem 12, 179
 def num_divisors_sieve(n, proper=False):
-    """Find the number of divisors for all nonnegative numbers less than ``n``."""
+    """Find the number of divisors for all nonnegative numbers less than ``n``.
+    """
     d = np.zeros(n, dtype=int)
     for i in range(1, n//2):
         d[i::i] += 1
@@ -211,7 +153,8 @@ def max_sum_triangle(tri):
 # Problems 21, 23
 def sum_divisors_sieve(n, proper=True):
     """Sieve for the sum of proper divisors for natural numbers less than ``n``.
-    Optionally, we can include the number itself with ``proper=False``."""
+    Optionally, we can include the number itself with ``proper=False``.
+    """
     dsum = np.ones(n, dtype=int)
     dsum[:2] = 0
     for i in range(2, int((n-1)**0.5)+1):
@@ -257,7 +200,8 @@ def is_prime(n):
 # Problems 32, 38
 def is_pandigital(n, digits=9):
     """Check if a number ``n`` is pandigital with respect to a set of
-    ``digits``."""
+    ``digits``.
+    """
     if isinstance(digits, int):
         digits = set(range(1, digits+1))
     n = [int(d) for d in str(n)]
@@ -268,15 +212,5 @@ def pentagonal(n):
     """Find the ``n``th pentagonal number.
 
     ``P_n = n*(3*n+1)/2``
-
-    Parameters
-    ----------
-    n : int
-        index
-
-    Returns
-    -------
-    P_n :
-        returns the ``n``th pentagonal number
     """
     return n*(3*n-1)//2

@@ -2,12 +2,12 @@
 #+AUTHOR: Steven Kuntz
 #+EMAIL: stevenjkuntz@gmail.com
 #+OPTIONS: num:nil toc:1
-#+PROPERTY: header-args:ipython :session *ipython*
+#+PROPERTY: header-args:jupyter-python :session py
 #+PROPERTY: header-args :results output :exports both
 
 Initialize Python session with imports.
 
-#+begin_src ipython :results none
+#+begin_src jupyter-python :results none
 from collections import Counter
 from itertools import combinations_with_replacement
 import numpy as np
@@ -18,10 +18,7 @@ from scipy.special import comb
 import timeit
 #+end_src
 
-#+COLUMNS: %25ITEM %TODO %3PRIORITY %TAGS
 * 51 Prime digit replacements
-** Q: 
-
 By replacing the 1st digit of the 2-digit number *3, it turns out that six of
 the nine possible values: 13, 23, 43, 53, 73, and 83, are all prime.
 
@@ -35,11 +32,10 @@ Find the smallest prime which, by replacing part of the number (not necessarily
 adjacent digits) with the same digit, is part of an eight prime value family.
 
 ** A:
-
 To generate primes, I use the Sieve of Eratosthenes. To figure out how many
 digits our prime has, we need to figure out how many digits we need to replace.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from euler import esieve
 
 primes = esieve(10**6)
@@ -92,7 +88,7 @@ expressions would be phenomenally more efficient, but I don't really care
 because it worked and python is not the best language with which to implement
 anything =regex=.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def pe051():
     digits = ['0','1','2']
     for p in primes:
@@ -126,7 +122,7 @@ the same digits.
 The problem actually describes an interesting property of the repeating decimal
 for 1/7. 
 
-#+begin_src ipython
+#+begin_src jupyter-python
 for i in range(1,7):
     print("%.6f" % (1000000*i//7/1000000))
 #+end_src
@@ -156,7 +152,7 @@ To check the numbers \(a,b\) for permutations, just change both numbers to
 strings and sort them. They, \(a,b\), are permutations if and only if their
 sorted strings are equal.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def pe052(m=6):
     """Find the smallest number ``n`` such that ``2n, 3n, ..., mn`` are all
     permutations of ``n``."""
@@ -187,7 +183,7 @@ multiples. Strangely, our solution is true for any solution of three to six
 multiples, inclusive. After that, there aren't solutions that I could find in
 reasonable run times, so I'm guessing they don't exist.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 for m in range(2,7):
     print(pe052(m))
 #+end_src
@@ -220,7 +216,7 @@ greater than one-million?
 
 Brute force. Easy.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def pe053(nmax,limit):
     """Find the number of combinations ``comb(n,k)`` where ``n<nmax`` above
     ``limit``."""
@@ -290,7 +286,7 @@ would be worth sharing.
 The face value of a card can be coded to a numerical value quickly with a
 dictionary.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 FACE = {r:i+2 for i, r in enumerate('23456789TJQKA')}
 print(FACE)
 #+end_src
@@ -311,7 +307,7 @@ with first compare the frequencies, descending order, and in the event of a tie,
 will compare the card values, ordered by their frequencies. This gives the
 correct winner for all but one of the games in the problem statement.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def rank(hand):
     """Determine poker hand ranks for ``hand``."""
     rank = sorted([(v,FACE[k]) for k,v in Counter([x[0] for x in hand]).items()],reverse=True)
@@ -356,7 +352,7 @@ followed by numbers decreasing consecutively until 2. I constructed these
 explicitly as a constant so I don't have to find them again every time the
 program is run.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 STRAIGHT = [
     [tuple(range(i,i-3,-1)) for i in range(4,15)] + [(14,3,2)],
     [tuple(range(i,i-4,-1)) for i in range(5,15)] + [(14,4,3,2)],
@@ -399,7 +395,7 @@ assert rank(['2H', '2D', '4C', '4D', '4S']) > rank(['3C', '3D', '3S', '9S', '9D'
 Now all the games are correctly judged. I didn't make examples for four and
 three card poker so I'm not actually sure they work.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 wins = [0,0]
 with open("054.txt") as f:
     for line in f:
@@ -416,7 +412,7 @@ print(wins)
 
 And for fun we can judge some four card poker.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 wins = [0,0]
 with open("054.txt") as f:
     for line in f:
@@ -434,7 +430,7 @@ print(wins)
 
 And three card poker.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 wins = [0,0,0]
 with open("054.txt") as f:
     for line in f:
@@ -493,7 +489,7 @@ that six numbers are not Lychrel: 349, 943, 1292, 2921, 4213, and 3124. If I
 had a set of candidates, after proving that 349 was not Lychrel, I could pop all
 those numbers from the set of candidates.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from euler import is_palindrome
 def lychrel(n=10000,max_iter=50):
     """Find the lychrel numbers below ``n`` through brute force."""
@@ -814,7 +810,7 @@ assert lychrel(197) == {196}
 {1473, 195, 687, 591, 786, 4125, 3741, 5214}
 #+end_example
 
-#+begin_src ipython
+#+begin_src jupyter-python
 print(len(lychrel()))
 # %timeit len(lychrel())
 #+end_src
@@ -6102,7 +6098,7 @@ the maximum digital sum?
 
 Brute force.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def pe056(n=100):
     max_sum = 0
     for a in range(100):
@@ -6159,7 +6155,7 @@ N_{n+1} & = & N_n+2D_n \\
 D_{n+1} & = & N_n+D_n
 \end{eqnarray*}
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def pe057(n=1000):
     N, D = (3,2)
     count = 0
@@ -6176,7 +6172,7 @@ assert pe057(8) == 1
 
 Quick.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 print(pe057())
 %timeit pe057()
 #+end_src
@@ -6230,7 +6226,7 @@ c_1 & = & n^2 - 3(n-1)
 \(c_4\) will never be prime, so we can ignore that corner. A simple while loop
 suffices.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from euler import is_prime
 
 def pe058(p=0.1):
@@ -6249,7 +6245,7 @@ assert pe058(0.6) == 5
 
 This takes way to long. The inefficiencies lie in the =is_prime= function.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 print(pe058())
 %timeit pe058()
 #+end_src
@@ -6292,7 +6288,7 @@ ASCII values in the original text.
 First, I'll read the message from the file. I'd print out the actual characters
 but it would be gibberish.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 with open("059.txt") as file:
     cipher = []
     for line in file:
@@ -6312,7 +6308,7 @@ Summarizing the problem statement, our cipher has the following properties.
 
 XOR encryption is trivial to code given the problem statement.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def encrypt(message,key):
     """Return the cipher of the given ``message`` and ``key`` with XOR
     encryption. The message and key are expected to be in ASCII standard.
@@ -6331,7 +6327,7 @@ for 'e' to outrank spaces in frequency, however, the average work would have to
 exceed eight letters. Assuming that the only comprehensible code is an English
 one, we can assume the key that gives us a plurality of spaces is correct.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 def freq_attack(cipher,len_key):
     key = [Counter(cipher[i::len_key]).most_common()[0][0]^32 for i in range(len_key)]
     return encrypt(cipher,key)
@@ -6348,7 +6344,7 @@ print("".join([chr(c) for c in message]))
 I can also use this idea to crack keys of a random length. Try this code a few
 times.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 new_cipher = encrypt(message,[randint(97,123) for i in range(randint(2,6))])
 for L in range(1,7):
     msg = freq_attack(new_cipher,L)
@@ -6368,7 +6364,7 @@ Notice that the upper bound is kept relatively low. With a key of length 6 we're
 well posed to be able to decipher the random key, but as we increase the length
 past this, the extracted message becomes more noisy.
 
-#+begin_src ipython
+#+begin_src jupyter-python
 for L in range(4,60,8):
     cph = encrypt(message,[randint(97,123) for i in range(L)])
     msg = freq_attack(cph,L)
@@ -6435,7 +6431,7 @@ Or three prime set and eight total primes.
 . & . & . & . & . & 1
 \end{bmatrix} \]
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from sympy import sieve
 sieve._reset()
 print(sieve._list)
@@ -6444,7 +6440,7 @@ print(sieve._list)
 #+RESULTS:
 : array('l', [2, 3, 5, 7, 11, 13])
 
-#+begin_src ipython
+#+begin_src jupyter-python
 import networkx
 from networkx.algorithms.clique import find_cliques
 G = networkx.Graph()
@@ -6453,7 +6449,7 @@ five_cliques=[clique for clique in find_cliques(G) if len(clique)==5]
 print(sorted(five_cliques, key=lambda clique: sum(clique))[0])
 #+end_src
 
-#+begin_src ipython
+#+begin_src jupyter-python
 from itertools import combinations
 import networkx as nx
 from sympy.ntheory import isprime

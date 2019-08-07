@@ -1,0 +1,93 @@
+#+TITLE: Project Euler solutions (#91-100)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: stevenjkuntz@gmail.com
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:jupyter-python :session py :results raw drawer
+
+Initialize Python session with imports.
+
+#+begin_src jupyter-python :results none
+import numpy as np
+import timeit
+#+end_src
+
+* 91
+** A:
+* 92
+** A:
+* 93
+** A:
+* 94
+** A:
+* 95
+** A:
+* 96
+** A:
+* 97
+** A:
+* 98
+** A:
+* 99
+** A:
+* 100 Arranged probability
+If a box contains twenty-one coloured discs, composed of fifteen blue discs and
+six red discs, and two discs were taken at random, it can be seen that the
+probability of taking two blue discs, P(BB) = (15/21)×(14/20) = 1/2.
+
+The next such arrangement, for which there is exactly 50% chance of taking two
+blue discs at random, is a box containing eighty-five blue discs and thirty-five
+red discs.
+
+By finding the first arrangement to contain over \(10^{12}\) = 1,000,000,000,000
+discs in total, determine the number of blue discs that the box would contain.
+
+** A:
+The analytic solution to this problem is straightforward since we only chose two
+discs. We have \(n\) blue discs and \(m\) red discs in a box. Let the
+probability of pulling two blue discs in a row be
+
+\[ P(BB) = \frac{n}{n+m}\frac{n-1}{n+m-1} \]
+
+Suppose we only know the total, \(n+m=t\).
+
+\begin{eqnarray*}
+ \frac{n}{t}\frac{n-1}{t-1} & = & \frac{1}{2} \\
+                  2n^2 - 2n & = & t^2 - t \\
+        2n^2 - 2n - t^2 + t & = & 0
+\end{eqnarray*}
+
+At first I tried solving this with the quadratic formula, but that took too
+long. Instead, I found an [[https://www.alpertron.com.ar/QUAD.HTM][integer variable equation solver]] that seems to work
+quite well for this problem. It even gives you step-by-step solutions. The final
+equations that it spits out are
+
+\begin{eqnarray*}
+n_{k+1} & = & 3n_k + 2t_k - 2 \\
+t_{k+1} & = & 4n_k + 3t_k - 3
+\end{eqnarray*}
+
+The algorithm is \(O(k)\),
+
+#+begin_src jupyter-python
+lower = 10**12
+n,t = (1,1)
+while t<lower:
+    n,t = (3*n+2*t-2,4*n+3*t-3)
+print(n)
+
+time = min(timeit.repeat(
+    """
+lower = 10**12
+n,t = (1,1)
+while t<lower:
+    n,t = (3*n+2*t-2,4*n+3*t-3)
+    """,
+    number=1000
+))*1000
+
+print("t = %.2f us" % time)
+#+end_src
+
+#+RESULTS:
+: 756872327473
+: t = 2.76 us

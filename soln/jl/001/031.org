@@ -1,0 +1,682 @@
+#+TITLE: Project Euler solutions (#31-40)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: stevenjkuntz@gmail.com
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:jupyter-python :session py
+#+PROPERTY: header-args :results output :exports both
+
+Initialize Python session with imports.
+
+#+begin_src jupyter-python :results none
+from bitarray import bitarray
+from collections.abc import Iterable
+from functools import reduce
+from operator import mul
+import numpy as np
+from math import ceil, log10
+from random import randint
+import timeit
+#+end_src
+
+* 31 Coin sums
+In England the currency is made up of pound, £, and pence, p, and there are
+eight coins in general circulation:
+
+1p, 2p, 5p, 10p, 20p, 50p, £1 (100p) and £2 (200p).
+It is possible to make £2 in the following way:
+
+1×£1 + 1×50p + 2×20p + 1×5p + 1×2p + 3×1p
+How many different ways can £2 be made using any number of coins?
+
+** A:
+This is best solved with dynamic programming. I'll illustrate how this algorithm
+works with a smaller problem. Consider the vector =S= ==[1,2,3,4,5]=. How many
+ways are there to add up elements of =S= to total 5, repeats allowed? Lets say
+we already decided to use 3. This gives us a smaller subproblem: how many ways
+are there to add up elements of =S= to total 5-3? Starting from 1 we can build a
+list of ways, =w=. For each element, =c=, in the vector, we count the number
+ways to build =i= from elements less than or equal to =c= and add the total to
+=w[i]=. Conveniently, that total must be equal to =w[i-c]= if we iterate through
+=S= in order. If we initialize =w[0]=1= it is easy to do this with two nested
+loops.
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      0 |      0 |      0 |      0 |      0 |
+
+Starting with 1, every =w[i-1]=1=.
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      1 |      1 |      1 |      1 |      1 |
+
+Moving on to 2, there are more ways to make the sums. =w[2-2]=1= so we add 1
+to =w[2]= (=w[2] <- w[2]+1=). The same is done with =w[3]=. =w[4-2]=2= so we add
+2 to =w[4]= (=w[4] <- w[4]+2=). 
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      1 |      2 |      2 |      3 |      3 |
+
+The same for 3.
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      1 |      2 |      3 |      4 |      5 |
+
+And 4.
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      1 |      2 |      3 |      5 |      6 |
+
+And 5.
+
+| =w[0]= | =w[1]= | =w[2]= | =w[3]= | =w[4]= | =w[5]= |
+|--------+--------+--------+--------+--------+--------|
+|      1 |      1 |      2 |      3 |      5 |      7 |
+
+The HackerRank version requires multiple queries, so I return the complete list,
+but here we just need the last element.
+
+#+begin_src jupyter-python
+def change_combinations(coins,value):
+    """Find the number of ways to make ``value`` from the coins in ``coins``,
+    repetitions allowed."""
+    ways = [0]*(value+1)
+    ways[0] = 1
+    for c in coins:
+        for i in range(c,value+1):
+            ways[i] += ways[i-c]
+    return ways
+
+assert change_combinations([1,2,3,4,5],5)[-1]==7
+
+COINS = [1,2,5,10,20,50,100,200]
+print(change_combinations(COINS,200)[-1])
+%timeit change_combinations(COINS,200)[-1]
+#+end_src
+
+#+RESULTS:
+: 73682
+: 86.5 µs ± 3.38 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+* 32 Pandigital products
+We shall say that an n-digit number is pandigital if it makes use of all the
+digits 1 to n exactly once; for example, the 5-digit number, 15234, is 1 through
+5 pandigital.
+
+The product 7254 is unusual, as the identity, 39 × 186 = 7254, containing
+multiplicand, multiplier, and product is 1 through 9 pandigital.
+
+Find the sum of all products whose multiplicand/multiplier/product identity can
+be written as a 1 through 9 pandigital.
+
+HINT: Some products can be obtained in more than one way so be sure to only
+include it once in your sum.
+
+** A:
+Checking if a number is pandigital is trivial using a length equivalence check
+and a set equivalence check.
+
+#+begin_src jupyter-python
+def is_pandigital(n,digits={1,2,3,4,5,6,7,8,9}):
+    """Check if a number ``n`` is pandigital with respect to a set of
+    ``digits``."""
+    n = [int(d) for d in str(n)]
+    return (len(n) == len(digits) and set(n) == digits)
+
+d = {1,2,3,4}
+assert is_pandigital(1234,d) == True
+assert is_pandigital(4321,d) == True
+assert is_pandigital(1235,d) == False
+assert is_pandigital(1233,d) == False
+assert is_pandigital(12334,d) == False
+#+end_src
+
+#+RESULTS:
+
+If \(ab=c\) is pandigital, then \(a,b,c\) must contain 9 total digits
+(\(d_a+d_b+d_c=9\)). Below is a table for approximating \(d_c\) if \(d_a\) and
+\(d_b\) are known. 
+
+| \(d_a\)\\(d_b\) | 1   |   2 |   3 |   4 |
+|-----------------+-----+-----+-----+-----|
+|               1 | 1-2 | 2-3 | 3-4 | 4-5 |
+|               2 | -   | 3-4 | 4-5 | 5-6 |
+|               3 | -   |   - | 5-6 | 6-7 |
+|               4 | -   |   - |   - | 7-8 |
+
+We can modify this table to be the total number of digits, \(d_a+d_b+d_c\).
+
+| \(d_a\)\\(d_b\) | 1   |   2 |     3 |     4 |
+|-----------------+-----+-----+-------+-------|
+|               1 | 3-4 | 5-6 |   7-8 |  9-10 |
+|               2 | -   | 7-8 |  9-10 | 11-12 |
+|               3 | -   |   - | 11-12 | 13-14 |
+|               4 | -   |   - |     - | 15-16 |
+
+Therefore, the only candidates for pandigital numbers are where the number of
+digits of \(a,b\) are either 1 and 4, or 2 and 3. More generally, \(a,b\) must
+contain exactly 5 digits between them, or \(c\) must contain exactly 4 digits.
+Looking closely at the table, a pattern arises for the number of digits in
+\(c\).
+
+| \(n\) | \(d_a\leq\) | \(d_c\) |
+|-------+-------------+---------|
+|     3 |           1 |       1 |
+|     4 |           1 |       2 |
+|     5 |           2 |       2 |
+|     6 |           2 |       3 |
+|     7 |           3 |       3 |
+|     8 |           3 |       4 |
+|     9 |           4 |       4 |
+
+Therefore \(d_a\leq \lfloor (n-1)/2 \rfloor\) and \(d_c = \lfloor n/2 \rfloor\).
+We can also write bounds for \(a,b,c\) as follows.
+
+\[ 1 < a \leq \sum_{i=1}^{d_a} (10-i)10^{d_a-i} \]
+
+\[ \sum_{i=1}^{d_c} i10^{d_c-i} \leq c \leq \sum_{i=1}^{d_c} (10-i)10^{d_c-i} \]
+
+And if we enforce \(a<b\).
+
+\[ \max \{ a, \lfloor \frac{1}{a}\sum_{i=1}^{d_c} i10^{d_c-i} \rfloor \}
+    < b 
+    \leq \lfloor \frac{1}{a}\sum_{i=1}^{d_c} (10-i)10^{d_c-i} \rfloor \]
+
+I check all the options in the bounds and add the products to a set.
+
+#+begin_src jupyter-python
+def pandigital_products(digits=[1,2,3,4,5,6,7,8,9]):
+    """Find all the products such that the identity ``ab=c`` which is pandigital
+    for the list ``digits``."""
+    if type(digits)==int:
+        digits = list(range(1,digits+1))
+
+    n = len(digits)
+    d_a = int((n-1)/2)
+    d_c = int(n/2)
+
+    c_min = sum([digits[i-1]*(10**(d_c-i)) for i in range(1,d_c+1)])
+    c_max = sum([digits[n-i]*(10**(d_c-i)) for i in range(1,d_c+1)])
+    a_max = sum([digits[n-i]*(10**(d_a-i)) for i in range(1,d_a+1)])
+
+    products = []
+    for a in range(2,a_max+1):
+        for b in range(max(a+1,int(c_min/a)),int(c_max/a)+1):
+            c = a*b
+            identity = str(a) + str(b) + str(c)
+            if is_pandigital(identity,set(digits)):
+                products += [c]
+    return products
+
+assert pandigital_products(4)==[12]
+assert pandigital_products(5)==[52]
+assert pandigital_products(6)==[162]
+
+print(sum(pandigital_products()))
+%timeit sum(pandigital_products())
+#+end_src
+
+#+RESULTS:
+: 56370
+: 80.1 ms ± 2.29 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+* 33 Digit cancelling fractions
+The fraction 49/98 is a curious fraction, as an inexperienced mathematician in
+attempting to simplify it may incorrectly believe that 49/98 = 4/8, which is
+correct, is obtained by cancelling the 9s.
+
+We shall consider fractions like, 30/50 = 3/5, to be trivial examples.
+
+There are exactly four non-trivial examples of this type of fraction, less than
+one in value, and containing two digits in the numerator and denominator.
+
+If the product of these four fractions is given in its lowest common terms, find
+the value of the denominator.
+
+** A:
+Kind of an easy problem, but there is a clever solution which has minimal
+iterations. Let's assume the fraction has the following form, where \(i\) is the
+digit we "cancel" out. Multiplying this out we can solve for \(i\) in terms of
+\(a\) and \(b\). 
+
+\begin{eqnarray*}
+    \frac{10a + i}{10i + b} & = & \frac{a}{b} \\
+                  10ab + ib & = & 10ia + ab \\
+                        9ab & = & i(10a - b) \\
+          \frac{9ab}{10a-b} & = & i
+\end{eqnarray*}
+
+where \( 1 \leq a < b \leq 9 \).
+
+Since \(i\) must be a whole digit, we use =divmod= to get the whole number
+quotient and remainder. In total, we must iterate over \(8(8+1)/2=36\)
+combinations of \(a,b\).
+
+#+begin_src jupyter-python
+fractions = []
+prod = 1
+for b in range(1,10):
+    for a in range(1,b):
+        i, r = divmod(9*a*b,10*a-b)
+        if r==0 and i<10:
+            fractions += [(10*a+i,10*i+b)]
+            prod *= b/a
+print(fractions)
+print(prod)
+#+end_src
+
+#+RESULTS:
+: [(16, 64), (19, 95), (26, 65), (49, 98)]
+: 100.0
+
+* 34 Digit factorials
+145 is a curious number, as 1! + 4! + 5! = 1 + 24 + 120 = 145.
+
+Find the sum of all numbers which are equal to the sum of the factorial of their
+digits.
+
+Note: as 1! = 1 and 2! = 2 are not sums they are not included.
+
+** A:
+
+These numbers are called [[https://en.wikipedia.org/wiki/Factorion][factorions]]. There are only four factorions: 1, 2, 145,
+40585. Ignoring 1 and 2, the sum is 40730.
+
+* 35 Circular primes
+The number, 197, is called a circular prime because all rotations of the digits:
+197, 971, and 719, are themselves prime.
+
+There are thirteen such primes below 100: 2, 3, 5, 7, 11, 13, 17, 31, 37, 71,
+73, 79, and 97.
+
+How many circular primes are there below one million?
+
+** A:
+Firstly, here's a helper function to rotate integers.
+
+#+begin_src jupyter-python
+def rotate_int(n):
+    """Find all rotations of the int ``n``."""
+    n_str = str(n)
+    return np.array([int(n_str[i:]+n_str[:i]) for i in range(1,len(n_str))])
+
+assert(rotate_int(179)==[791,917]).all()
+#+end_src
+
+#+RESULTS:
+
+This is easy to do with the Sieve of Eratosthenes (see problem 5). Note how I
+sieve up to \(10^{\lceil\log_{10}n\rceil}\) rather than \(n\), making sure that
+every possible rotation is considered. This is necessary to handle cases where
+\(n\) is not a power of 10.
+
+#+begin_src jupyter-python
+from euler import esieve
+
+def circular_primes(n):
+    """Find all the circular primes less than ``n``."""
+    # sieve all the primes that have at least as many digits as n
+    limit = 10**ceil(log10(n))
+    primes = esieve(limit)
+    # only check those primes less than n, and skip those that contain the
+    # digits 0,2,4,6,8
+    invalid = set('02468')
+    primes = {p for p in primes if not set(str(p)).intersection(invalid)}
+    circular = {2}
+    for p in primes:
+        if p not in circular and p<n:
+            rot = rotate_int(p)
+            if all([r in primes for r in rot]):
+                circular.add(p)
+                circular.update(rot[rot<n])
+    return circular
+
+assert circular_primes(100)=={2,3,5,7,11,13,17,31,37,71,73,79,97}
+assert circular_primes(97)=={2,3,5,7,11,13,17,31,37,71,73,79}
+#+end_src
+
+#+RESULTS:
+
+The most significant savings in runtime were found by using sets and reducing
+their size by excluding even digits.
+
+#+begin_src jupyter-python
+print(len(circular_primes(1000000)))
+%timeit len(circular_primes(1000000))
+#+end_src
+
+#+RESULTS:
+: 55
+: 123 ms ± 9.29 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+* 36 Double-base palindromes
+** Q:
+
+The decimal number, 585 = 10010010012 (binary), is palindromic in both bases.
+
+Find the sum of all numbers, less than one million, which are palindromic in
+base 10 and base 2.
+
+(Please note that the palindromic number, in either base, may not include
+leading zeros.)
+
+** A:
+
+I'm going to generate all the palindromes in base 10 and check if they are
+palindromic in base 2. The following functions will check if a number is
+palindromic and generate all the base 10 palindromes with a given number of
+digits.
+
+#+begin_src jupyter-python
+def is_palindrome(n,b):
+    """Check if an integer ``n`` is a palindrome in base ``b``."""
+    rev = 0
+    k = n
+    while k > 0:
+        rev = b*rev + (k%b)
+        k //= b
+    return n == rev
+    
+assert is_palindrome(9009,10)
+assert is_palindrome(33,2)
+assert not is_palindrome(55,2)
+
+def pal_list(k):
+    """Find all palindromic numbers with ``k`` digits."""
+    j = (k+1)//2
+    if k%2==1:
+        return np.array([int(str(i)+str(i)[:-1][::-1])
+            for i in range(10**(j-1),10**j)],dtype=int)
+    else:
+        return np.array([int(str(i)+str(i)[::-1])
+            for i in range(10**(j-1),10**j)],dtype=int)
+
+assert len(pal_list(1))==9
+assert len(pal_list(2))==9
+assert len(pal_list(3))==90
+#+end_src
+
+#+RESULTS:
+
+We know that a binary number starts with 1, so a binary palindrome ends with 1,
+making it odd. We only need to check odd numbers in our palindromes. Not sure
+a good =assert= statement to use here, but you get the point that it picked up
+585.
+
+#+begin_src jupyter-python
+def decimal_binary_palindromes(n):
+    """Find all numbers less than ``n`` that are palindromic in base 2 and 10
+    """
+    dmax = ceil(log10(n-1))
+    palindromes = []
+    for k in range(1,dmax+1):
+        pal = pal_list(k)
+        pal = pal[pal%2==1]
+        pal = pal[pal<n]
+        palindromes += [p for p in pal if is_palindrome(p,2)]
+    return palindromes
+
+print(decimal_binary_palindromes(1000))
+#+end_src
+
+#+RESULTS:
+: [1, 3, 5, 7, 9, 33, 99, 313, 585, 717]
+
+I'd call this method good enough.
+
+#+begin_src jupyter-python
+print(sum(decimal_binary_palindromes(1000000)))
+%timeit sum(decimal_binary_palindromes(1000000))
+#+end_src
+
+#+RESULTS:
+: 872187
+: 11.4 ms ± 701 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+Shit, it even has sublinear scaling. Can't complain about that.
+
+#+begin_src jupyter-python
+print(sum(decimal_binary_palindromes(100000000)))
+%timeit sum(decimal_binary_palindromes(100000000))
+#+end_src
+
+#+RESULTS:
+: 39347399
+: 151 ms ± 9.59 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+* 37 Truncatable primes
+** Q:
+
+The number 3797 has an interesting property. Being prime itself, it is possible
+to continuously remove digits from left to right, and remain prime at each
+stage: 3797, 797, 97, and 7. Similarly we can work from right to left: 3797,
+379, 37, and 3.
+
+Find the sum of the only eleven primes that are both truncatable from left to
+right and right to left.
+
+NOTE: 2, 3, 5, and 7 are not considered to be truncatable primes.
+
+** A:
+
+This is similar to the circular primes problem. These primes are called
+[[https://oeis.org/A020994][two-sided primes]]. We know there are only eleven, and what they are.
+
+#+begin_src jupyter-python
+tsp = [2, 3, 5, 7, 23, 37, 53, 73, 313, 317, 373, 797, 3137, 3797, 739397]
+print(sum(tsp[4:]))
+#+end_src
+
+#+RESULTS:
+: 748317
+
+The only way to do this "blindly" is by iterating from 11 and checking every
+candidate for being prime, left prime, and right prime. I don't feel like doing
+this, so I'm going to use my omnipotence of A020994 to enforce an upper bound of
+one million.
+
+#+begin_src jupyter-python
+def two_sided_primes(n):
+    """Find the two-sided primes less than ``n``."""
+    if n<=23:
+        return []
+    primes = esieve(n)
+    # skip primes that contain the digits 0,2,4,6,8
+    invalid = set('02468')
+    primes = {p for p in primes if not set(str(p)).intersection(invalid)}
+    tsp = [23]
+    for p in primes:
+        dp = ceil(log10(p))
+        left = all([(p%(10**i) in primes) for i in range(1,dp)])
+        right = all([(p//(10**i) in primes) for i in range(1,dp)])
+        if left and right and p>10:
+            tsp += [p]
+    return tsp
+
+assert len(two_sided_primes(1000))==8
+#+end_src
+
+#+RESULTS:
+
+It is kind of slow, but it's far better than trying to check tons of numbers for
+being prime.
+
+#+begin_src jupyter-python
+print(sum(two_sided_primes(1000000)))
+%timeit sum(two_sided_primes(1000000))
+#+end_src
+
+#+RESULTS:
+: 748317
+: 137 ms ± 11.4 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+* 38 Pandigital multiples
+** Q:
+
+Take the number 192 and multiply it by each of 1, 2, and 3:
+
+192 × 1 = 192
+192 × 2 = 384
+192 × 3 = 576
+
+By concatenating each product we get the 1 to 9 pandigital, 192384576. We will
+call 192384576 the concatenated product of 192 and (1,2,3)
+
+The same can be achieved by starting with 9 and multiplying by 1, 2, 3, 4, and
+5, giving the pandigital, 918273645, which is the concatenated product of 9 and
+(1,2,3,4,5).
+
+What is the largest 1 to 9 pandigital 9-digit number that can be formed as the
+concatenated product of an integer with (1,2, ... , n) where n > 1?
+
+** A:
+
+We already know how to check pandigital =str= and =int= (see problem 32). We
+need at least two multiples, so we can set an upper bound for n.
+
+n × 1 = ...
+n × 2 < 98765
+
+#+begin_src jupyter-python
+def pandigital_multiples(digits=[1,2,3,4,5,6,7,8,9]):
+    """Find all the numbers ``n`` for which their multiples concatenate to form
+    a number pandigital in ``digits``."""
+    dmax = int((len(digits)+1)/2) # maximum number of digits for n
+    nmax = sum([digits[-1-i]*(10**(dmax-i-1)) for i in range(0,dmax)])
+    pan = []
+    for n in range(1,nmax+1):
+        n_str = str(n)
+        k = 2
+        while len(n_str)<len(digits):
+            n_str += str(k*n)
+            k += 1
+        if len(n_str)==len(digits) and is_pandigital(n_str,set(digits)):
+            pan += [n]
+    return pan
+
+n = pandigital_multiples()[-1]
+print(str(n)+str(2*n))
+#+end_src
+
+#+RESULTS:
+: 932718654
+
+* 39 Integer right triangles
+** Q:
+
+If p is the perimeter of a right angle triangle with integral length sides,
+{a,b,c}, there are exactly three solutions for p = 120.
+
+{20,48,52}, {24,45,51}, {30,40,50}
+
+For which value of p ≤ 1000, is the number of solutions maximised?
+
+** A:
+
+We can reuse the triples generator from [[./project-euler-001.org::* 9 Special Pythagorean triplet][problem 9]] to find all the triples for a
+given triangle perimeter. Then, we just iterate over all perimeters and take the
+\(\argmax\). We could save time by skipping the odd numbers.
+
+#+begin_src jupyter-python
+from euler import pythagorean_triples_from_sum
+
+assert len(pythagorean_triples_from_sum(120)[0])==3
+
+print(np.argmax([len(pythagorean_triples_from_sum(i)) for i in range(0,1001)]))
+%timeit np.argmax([len(pythagorean_triples_from_sum(i)) for i in range(0,1001)])
+#+end_src
+
+#+RESULTS:
+: 840
+: 2 ms ± 145 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+* 40 Champernowne's constant
+** Q:
+
+An irrational decimal fraction is created by concatenating the positive
+integers:
+
+0.123456789101112131415161718192021...
+
+It can be seen that the 12th digit of the fractional part is 1.
+
+If dn represents the nth digit of the fractional part, find the value of the
+following expression.
+
+\[d_1 \times d_{10} \times d_{100} \times d_{1000} \times d_{10000} \times
+  d_{100000} \times d_{1000000} \]
+
+** A:
+
+This is actually an exercise in digit counting. Consider the following table,
+which counts the number of digits in a range of numbers.
+
+| range                 | total decimals   |
+|-----------------------+------------------|
+| \([1,9]\)             | \(9\)            |
+| \([10,99]\)           | \(180\)          |
+| \([100,999]\)         | \(2700\)         |
+| \([1000,9999]\)       | \(36000\)        |
+| ...                   | ...              |
+| \([10^{k-1},10^k-1]\) | \(9(10^{k-1})k\) |
+
+So to get the \(i\)th digit, we can use this power series. Let \(S(k)\) be the
+total decimals in Champernowne's constant that are covered for numbers with
+\(k\) or less digits.
+
+\[ S(k) = \sum_{j=1} 9(10^{j-1})j \]
+
+Let \(S(k) < i \leq S(k+1) \). In other words, we know the \(i\)th digit belongs
+to a \(k\) digit number. Then we find the number \(n\) that contains our digit
+by dividing the remaining digit places \(i-S(k)\) by the number of digits in the
+number. The remainder is the digit's place in \(n\).
+
+\[ n = 10^k + \lfloor (i-S(k)-1)/(k+1) \rfloor \]
+
+#+begin_src jupyter-python
+def champernowne_digit(i,digits=None):
+    """Find the ``n``th digit of Champernowne's constant."""
+    if digits is None:
+        digits = [9*(10**(k-1))*k for k in range(1,ceil(log10(i))+2)]
+    k = 0
+    while i > digits[k]:
+        i -= digits[k]
+        k += 1
+    q, r = divmod(i-1,k+1)
+    return int(str(10**k+q)[r])
+
+for i in range(1,10):
+    assert champernowne_digit(i)==i
+assert champernowne_digit(10)==1
+assert champernowne_digit(12)==1
+#+end_src
+
+#+RESULTS:
+
+This is extremely fast.
+
+#+begin_src jupyter-python
+print(reduce(mul,[champernowne_digit(10**i) for i in range(7)]))
+%timeit reduce(mul,[champernowne_digit(10**i) for i in range(7)])
+#+end_src
+
+#+RESULTS:
+: 210
+: 17.2 µs ± 1.41 µs per loop (mean ± std. dev. of 7 runs, 100000 loops each)
+
+Simulating the hackerrank version, it remains as fast.
+
+#+begin_src jupyter-python
+ii = [37179634687547126, 243570604996000042, 889412298717781865,
+      928015702768494271, 219144108876736854, 519463297996240891, 
+      766406432258028844]
+print(reduce(mul,[champernowne_digit(i) for i in ii]))
+%timeit reduce(mul,[champernowne_digit(i) for i in ii])
+#+end_src
+
+#+RESULTS:
+: 10080
+: 50 µs ± 128 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)

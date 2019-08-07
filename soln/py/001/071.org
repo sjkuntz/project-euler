@@ -1,0 +1,115 @@
+#+TITLE: Project Euler solutions (#71-80)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: stevenjkuntz@gmail.com
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:jupyter-python :session py :results raw drawer
+
+Initialize Python session with imports.
+
+#+begin_src python :results none
+import numpy as np
+import timeit
+#+end_src
+
+* 71
+** A:
+* 72
+** A:
+* 73
+** A:
+* 74
+** A:
+* 75 Singular integer right triangles
+It turns out that 12 cm is the smallest length of wire that can be bent to form
+an integer sided right angle triangle in exactly one way, but there are many
+more examples.
+
+- 12 cm: (3,4,5)
+- 24 cm: (6,8,10)
+- 30 cm: (5,12,13)
+- 36 cm: (9,12,15)
+- 40 cm: (8,15,17)
+- 48 cm: (12,16,20)
+
+In contrast, some lengths of wire, like 20 cm, cannot be bent to form an integer
+sided right angle triangle, and other lengths allow more than one solution to be
+found; for example, using 120 cm it is possible to form exactly three different
+integer sided right angle triangles.
+
+120 cm: (30,40,50), (20,48,52), (24,45,51)
+
+Given that L is the length of the wire, for how many values of L ≤ 1,500,000 can
+exactly one integer sided right angle triangle be formed?
+
+** A:
+Reusing the function from problems 9 and 39. Recall Euclid's formula and a few
+properties about it. We can use these properties to sieve over all the possible
+integer right triangles, keeping a count of those at each index.
+
+\begin{eqnarray*}
+a & = & k(m^2-n^2) \\
+b & = & 2kmn \\
+c & = & k(m^2+n^2) \\
+s & = & a+b+c \\
+  & = & 2km^2+2kmn \\
+  & = & 2km(m+n)
+\end{eqnarray*}
+
+1) \(m < \sqrt{s/2}\) because \(m < k = m+n\).
+2) \(s/(2m)\) must be divisible by \(k = m+n\).
+3) \(m\) and \(n\) are coprime.
+4) \(k = m+n\) is odd.
+
+#+begin_src python
+from Euler import gcd
+
+def num_int_tri_sieve(limit):
+    """Sieve for the number of integer right triangles with perimeters less than
+    ``limit``.
+    """
+    count = np.zeros(limit,dtype=int)
+    for m in range(2,int((limit/2)**0.5)):
+        for n in range(1+m%2,m,2):
+            if gcd(n,m)==1:
+                s = 2*m*(m+n)
+                count[s::s] += 1
+    return count
+
+assert num_int_tri_sieve(121)[-1]==3
+#+end_src
+
+#+RESULTS:
+
+It takes a bit of time, but the result is still doable.
+
+#+begin_src python
+count = num_int_tri_sieve(1500001)
+print(sum(count[count==1]))
+
+time = min(timeit.repeat(
+    """
+count = num_int_tri_sieve(1500001)
+sum(count[count==1])
+    """,
+    "from __main__ import num_int_tri_sieve",
+    number=1
+))*1000
+
+print("t = %.2f ms" % time)
+#+end_src
+
+#+RESULTS:
+: 161667
+: t = 308.11 ms
+
+* 76
+** A:
+* 77
+** A:
+* 78
+** A:
+* 79
+** A:
+* 80
+** A:
+            

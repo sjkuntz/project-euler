@@ -18,7 +18,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="markdown",
     url="https://github.com/sjkuntz/project-euler",
-    py_modules=['Euler'],
+    py_modules=['euler'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License",

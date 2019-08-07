@@ -1,0 +1,825 @@
+#+TITLE: Project Euler solutions (#21-30)
+#+AUTHOR: Steven Kuntz
+#+EMAIL: skuntz@ucsb.edu
+#+OPTIONS: num:nil toc:1
+#+PROPERTY: header-args:jupyter-julia :session jl
+#+PROPERTY: header-args :results raw drawer :exports both
+
+Initialize Julia session with imports.
+
+#+begin_src jupyter-julia
+using BenchmarkTools
+using DelimitedFiles
+using Test
+@btime 0;
+#+end_src
+
+#+RESULTS:
+:   0.016 ns (0 allocations: 0 bytes)
+
+* 21 Amicable numbers
+Let d(n) be defined as the sum of proper divisors of n (numbers less than n
+which divide evenly into n).
+
+If d(a) = b and d(b) = a, where a ≠ b, then a and b are an amicable pair and
+each of a and b are called amicable numbers.
+
+For example, the proper divisors of 220 are 1, 2, 4, 5, 10, 11, 20, 22, 44, 55
+and 110; therefore d(220) = 284. The proper divisors of 284 are 1, 2, 4, 71 and
+142; so d(284) = 220.
+
+Evaluate the sum of all the amicable numbers under 10000.
+
+** A:
+This is actually a fairly straightforward problem if we have some way to look up
+the sum of divisors for any number less than our upper limit. Firstly, we need
+some way to sieve for the sum of divisors. The follow function accomplishes this
+by iterating over all the divisors, adding itself and its quotient at all the
+multiples.
+
+#+begin_src jupyter-julia
+"Sieve for the sum of proper divisors for natural numbers not exceeding ``n``."
+function sumdivisors(n::T) where {T<:Integer}
+    dsum = ones(T,n)
+    dsum[1] = 0
+    for i in 2:trunc(T,sqrt(n))
+        dsum[i^2] += i
+        for j in (i+1):trunc(T,n/i)
+            dsum[i*j] += i+j
+        end
+    end
+    return dsum
+end
+
+@test sumdivisors(10) == [0,1,1,3,1,6,1,7,4,8]
+#+end_src
+
+#+RESULTS:
+: [32m[1mTest Passed[22m[39m
+
+Now we can use this function to find all the amicable pairs under the chosen
+limit. Since the array =dsum[a]= is analogous to the \(d(a)\) function in the
+problem statement, let's define the amicable pair =(b,a)= as
+
+1) =dsum(a)=b=
+2) =dsum(b)=a=
+3) =a>b=
+
+Using this definition, we make sure to avoid counting perfect numbers, and make
+sure that every pair we return is unique.
+
+#+begin_src jupyter-julia
+"Find all the amicable pairs less than ``n``."
+function amicablepairs(n::T) where {T<:Integer}
+    dsum = sumdivisors(n)
+    pairs = T[]
+    for a in 2:n
+        if a > dsum[a] && dsum[dsum[a]] == a
+            push!(pairs,dsum[a])
+            push!(pairs,a)
+        end
+    end
+    return pairs
+end
+
+@test amicablepairs(283) == Int[]
+@test amicablepairs(284) == [220,284]
+
+@btime sum(amicablepairs(10000))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+:   49.590 μs (6 allocations: 78.55 KiB)
+: 31626
+:END:
+
+* 22 Names scores
+Using names.txt (right click and 'Save Link/Target As...'), a 46K text file
+containing over five-thousand first names, begin by sorting it into alphabetical
+order. Then working out the alphabetical value for each name, multiply this
+value by its alphabetical position in the list to obtain a name score.
+
+For example, when the list is sorted into alphabetical order, COLIN, which is
+worth 3 + 15 + 12 + 9 + 14 = 53, is the 938th name in the list. So, COLIN would
+obtain a score of 938 × 53 = 49714.
+
+What is the total of all the name scores in the file?
+
+** A:
+I hate text problems. First I need a way to map words to their values.
+
+#+begin_src jupyter-julia
+"Alphabetical value of a word. ``{'a'=>1,...,'z'=>26,'A'=>1,...,'Z'=>26}``."
+value(word::String) = sum([(Int(c)-64)%32 for c in word])
+
+@test value("colin") == value("COLIN") == 53
+#+end_src
+
+#+RESULTS:
+: [32m[1mTest Passed[22m[39m
+
+Then I need to read this file into an =Array{String}=, sort it, score the words,
+and finally scale the scores by their index.
+
+#+begin_src jupyter-julia
+function pe022(filename::String)
+    names = readdlm(filename,',',String)
+    sort!(names,dims=2)
+    return sum(map(w->value(w),names).*(1:length(names))')
+end
+
+@btime pe022("022.txt")
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+:   1.837 ms (30423 allocations: 1.61 MiB)
+: 871198282
+:END:
+
+* 23 Non-abundant sums
+A perfect number is a number for which the sum of its proper divisors is exactly
+equal to the number. For example, the sum of the proper divisors of 28 would be
+1 + 2 + 4 + 7 + 14 = 28, which means that 28 is a perfect number.
+
+A number n is called deficient if the sum of its proper divisors is less than n
+and it is called abundant if this sum exceeds n.
+
+As 12 is the smallest abundant number, 1 + 2 + 3 + 4 + 6 = 16, the smallest
+number that can be written as the sum of two abundant numbers is 24. By
+mathematical analysis, it can be shown that all integers greater than 28123 can
+be written as the sum of two abundant numbers. However, this upper limit cannot
+be reduced any further by analysis even though it is known that the greatest
+number that cannot be expressed as the sum of two abundant numbers is less than
+this limit.
+
+Find the sum of all the positive integers which cannot be written as the sum of
+two abundant numbers.
+
+** A:
+We start by finding all the abundant numbers, making sure to employ the sum of
+divisors sieve from problem 21. We can also use a similar strategy for the
+deficient numbers and perfect numbers, but that is beyond the problem scope.
+
+#+begin_src jupyter-julia
+"Find all the abundant numbers not exceeding ``n``."
+function abundantnumbers(n::T) where {T<:Integer}
+    dsum = sumdivisors(n)
+    return T[i for (i, d) in enumerate(dsum) if i < d]
+end
+
+@test length(abundantnumbers(11)) == 0
+@test abundantnumbers(12) == [12]
+@test abundantnumbers(20) == [12,18,20]
+
+@btime abundantnumbers(20161);
+#+end_src
+
+#+RESULTS:
+:   135.168 μs (18 allocations: 286.27 KiB)
+
+Now that we have the abundant numbers, we simply need to sieve over the abundant
+numbers. According to [[http://mathworld.wolfram.com/AbundantNumber.html][Wolfram Alpha]], the last number that we are searching for
+is actually 20161. Although the final algorithm is faster, it is more
+complicated. In order to be memory efficient, I had to loop over the indices of
+=ab= in two nested loops, breaking when the sum exceeds the cache length.
+Additionally, I preallocate =nonabsums= and iterate over the cache, keeping a
+running index where the next hit will be assigned.
+
+#+begin_src jupyter-julia
+"""
+Find all the positive integers not exceeding ``n`` which cannot be written as
+the sum of two abundant numbers.
+"""
+function pe023(n::T=20161) where {T<:Integer}
+    n = (n > 20161 ? 20161 : n)
+    ab = abundantnumbers(n)
+    cache = trues(n)
+    l_ab = length(ab)
+    for i in 1:l_ab
+        for j in i:l_ab
+            s = ab[i] + ab[j]
+            if s > n
+                break
+            end
+            cache[s] = false
+        end
+    end
+    nonabsums = zeros(T,sum(cache))
+    k = 1
+    for i in 1:n
+        if cache[i]
+            nonabsums[k] = i
+            k += 1
+        end
+    end
+    return nonabsums
+end
+
+@test sum(pe023(23)) == 276
+@test sum(pe023(24)) == 276
+@test sum(pe023(29)) == 411
+@test sum(pe023(30)) == 411
+
+@btime sum(pe023())
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+:   11.509 ms (21 allocations: 300.42 KiB)
+: 4179871
+:END:
+
+* 24 Lexicographic permutations
+A permutation is an ordered arrangement of objects. For example, 3124 is one
+possible permutation of the digits 1, 2, 3 and 4. If all of the permutations are
+listed numerically or alphabetically, we call it lexicographic order. The
+lexicographic permutations of 0, 1 and 2 are:
+
+012   021   102   120   201   210
+
+What is the millionth lexicographic permutation of the digits 0, 1, 2, 3, 4, 5,
+6, 7, 8 and 9?
+
+** A:
+To solve this with brute force, we would iterate up to the \(k\)th permutation.
+That's \(O(k)\) in run time, which is \(O(n!)\) for the worst case. However,
+there's a combinatoric shortcut that lets us do this in \(O(n)\) time. I could
+easily iterate through one million permutations, but it's not very hard to
+generalize with that shortcut. Consider the characters \(a_1,a_2,...,a_n\).
+We want the fastest way to find the \(k\)th lexicographic permutation of these
+characters. First, consider how many permutations there are where \(a_0\) is the
+leading character. 
+
+\begin{eqnarray*}
+a_1 a_2 \ldots a_{n-1} a_n \\
+a_1 a_2 \ldots a_n a_{n-1} \\
+\ldots \\
+a_1 a_n \ldots a_2 a_3 \\
+a_1 a_n \ldots a_3 a_2
+\end{eqnarray*}
+
+With \(a_1\) fixed, we have \(n-1\) more characters to permute, which gives
+\((n-1)!\) ways to order the remaining characters. If and only if
+\(k\leq(n-1)!\), we know that \(a_1\) must come first in the permutation. We
+also know the \((n-1)!+1\)th permutation must begin with \(a_2\) since it
+follows lexicographically.
+
+\[ p_{(n-1)!}   = a_1 a_n \ldots a_3 a_2 \]
+
+\[ p_{(n-1)!+1} = a_2 a_1 a_3 a_4 \ldots a_{n-1} a_n \]
+
+Again, there are \((n-1)!\) consecutive permutations where \(a_1\) is the
+leading character. In fact, for every \(a_i,i < n\), there are \((n-1)!\)
+permutations where it is the leading character. This makes it very easy to
+figure out what character is the leading character. Let \(a_i\) be the leading
+character for the \(k\)th permutation. We can find \(i\) using the following
+equation.
+
+\[ i = \lfloor (k-1)/(n-1)! \rfloor + 1 \]
+
+Let's test this on the example in the problem statement. What's the first
+character in the 4th permutation of 1,2,3?
+
+\[ i = \lfloor (4-1)/(3-1)! \rfloor + 1 = \lfloor 3/2 \rfloor + 1 = 1 + 1 = 2 \]
+
+What's the first character in the 5th permutation of 0,1,2?
+
+\[ i = \lfloor (5-1)/(3-1)! \rfloor + 1 = \lfloor 4/2 \rfloor + 1 = 2 + 1 = 3 \]
+
+Now we can figure out the first character with relative ease, but what about the
+remaining characters? Well, if we consider the first character fixed, we now
+have a new problem with only \(n-1\) characters. The problem is recursive. The
+new \(k\) to feed into the next iteration of the algorithm is found by the
+remainder after dividing by \((n-1)!\).
+
+\[ k'-1 \equiv (k-1)\mod(n-1)! \]
+
+Recursion is a crime against humanity, so here is the algorithm in a while loop,
+and tests for all the problem statement examples.
+
+#+begin_src jupyter-julia
+"Find the ``k``th lexicographic permutation of a list of characters, ``chars``."
+function kth_permutation(k::T,chars::Array{C,1}) where {T<:Integer,C<:Any}
+    char_list = copy(chars)
+    perm_list = C[]
+    while length(char_list) > 1 && k > 1
+        fact = factorial(length(char_list)-1)
+        i = div(k-1,fact) + 1
+        k = rem(k-1,fact) + 1
+        push!(perm_list,char_list[i])
+        deleteat!(char_list,i)
+    end
+    append!(perm_list,char_list)
+    return perm_list
+end
+
+CL = [1,2,3]
+@test kth_permutation(1,CL) == [1,2,3]
+@test kth_permutation(2,CL) == [1,3,2]
+@test kth_permutation(3,CL) == [2,1,3]
+@test kth_permutation(4,CL) == [2,3,1]
+@test kth_permutation(5,CL) == [3,1,2]
+@test kth_permutation(6,CL) == [3,2,1]
+
+CL = [i for i in 0:9]
+@btime reduce(*,map(x->string(x),kth_permutation(1000000,CL)))
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+:   1.140 μs (36 allocations: 1.89 KiB)
+: "2783915460"
+:END:
+
+* 25 1000-digit Fibonacci number
+The Fibonacci sequence is defined by the recurrence relation:
+
+\(F_n = F_{n−1} + F_{n−2}\), where \(F_1 = 1\) and \(F_2 = 1\).
+
+Hence the first 12 terms will be:
+
+\begin{eqnarray*}
+F_1 = 1 \\
+F_2 = 1 \\
+F_3 = 2 \\
+F_4 = 3 \\
+F_5 = 5 \\
+F_6 = 8 \\
+F_7 = 13 \\
+F_8 = 21 \\
+F_9 = 34 \\
+F_{10} = 55 \\
+F_{11} = 89 \\
+F_{12} = 144 \\
+\end{eqnarray*}
+
+The 12th term, \(F_{12}\), is the first term to contain three digits.
+
+What is the index of the first term in the Fibonacci sequence to contain 1000
+digits?
+
+** A:
+I went through a similar proof for problem 2 but since I originally wrote it for
+this problem, and thus already had it written down, I've left it in. Consider
+the formula for the \(n\)th Fibonacci number.
+
+\[ F_n = \frac{\varphi^n-(-\varphi)^{-n}}{\sqrt{5}} \]
+
+where \(\varphi=\frac{1+\sqrt{5}}{2}\). There's a useful simplification we can
+make if we look closely at the second term and substitute
+\(-\varphi^{-1}=-0.618\).
+
+\begin{eqnarray*}
+F_n & = & \frac{\varphi^n}{\sqrt{5}} - \frac{(-\varphi^{-1})^n}{\sqrt{5}} \\
+    & = & \frac{\varphi^n}{\sqrt{5}} - \frac{(-0.618)^n}{\sqrt{5}}
+\end{eqnarray*}
+
+Since \( \left| \frac{(-0.618)^n}{\sqrt{5}} \right| < \frac{1}{2} \) for all
+\(n\geq0\), we can eliminate the second term and round to the nearest integer
+with either the nearest integer function or the floor function.
+
+\begin{eqnarray*}
+F_n & = & \left[ \frac{\varphi^n}{\sqrt{5}} \right] \\
+    & = & \lfloor \frac{\varphi^n}{\sqrt{5}} + \frac{1}{2} \rfloor
+\end{eqnarray*}
+
+If we want a number above a lower bound \(L\), then \(F_n\geq L\).
+
+\begin{eqnarray*}
+\frac{\varphi^n}{\sqrt{5}} & \geq & L \\
+                 \varphi^n & \geq & \sqrt{5}\cdot L \\
+               n\ln\varphi & \geq & \frac{1}{2}\ln5+\ln L \\
+                         n & \geq & \frac{\frac{1}{2}\ln5+\ln L}
+                                         {\ln\varphi} \\
+                         n & =    & \lceil \frac{\frac{1}{2}\ln5 + \ln L}
+                                                {\ln\varphi} \rceil
+\end{eqnarray*}
+
+#+begin_src jupyter-julia
+"Find the index of the Fibonacci not below ``limit``."
+function fibonacci_above(limit::T) where {T<:Integer}
+    return ceil(T, (log(5)/2+log(limit)) / log((1+sqrt(5))/2))
+end
+
+@test fibonacci_above(10) == 7
+@test fibonacci_above(100) == 12
+
+@btime fibonacci_above(big(10)^999)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+:   4.753 μs (19 allocations: 1.04 KiB)
+: 4782
+:END:
+
+* 26 Reciprocal cycles
+A unit fraction contains 1 in the numerator. The decimal representation of the
+unit fractions with denominators 2 to 10 are given:
+
+1/2	= 	0.5
+1/3	= 	0.(3)
+1/4	= 	0.25
+1/5	= 	0.2
+1/6	= 	0.1(6)
+1/7	= 	0.(142857)
+1/8	= 	0.125
+1/9	= 	0.(1)
+1/10	= 	0.1
+
+Where 0.1(6) means 0.166666..., and has a 1-digit recurring cycle. It can be
+seen that 1/7 has a 6-digit recurring cycle.
+
+Find the value of d < 1000 for which 1/d contains the longest recurring cycle in
+its decimal fraction part.
+
+** A:
+What we are looking for are called the [[http://mathworld.wolfram.com/FullReptendPrime.html][full reptend primes]]. A primes \(p\) is 
+called a full reptend prime if and only if
+
+\[ 10^k \equiv 1 \mod p \]
+
+for \(k=p-1\) and no \(0 < k < p-1\).
+
+#+begin_src jupyter-python
+from euler import esieve
+
+def last_frp(n,primes=None):
+    """Find the last full reptend prime less than ``n``. Optionally takes a list
+    of primes as an argument.
+    """
+    if n<8:
+        return 3 if n>3 else None
+
+    if primes is None:
+        primes = esieve(n)
+
+    for p in primes[::-1]:
+        if p < n:
+            period = 1
+            while pow(10,period,p) != 1:
+                period += 1
+            if p-1 == period:
+                return p
+
+assert last_frp(10)==7
+assert last_frp(100)==97
+
+print(last_frp(1000))
+%timeit last_frp(1000)
+#+end_src
+
+#+RESULTS:
+: 983
+: 1.29 ms ± 5.86 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+* 27 Quadratic primes
+Euler discovered the remarkable quadratic formula:
+
+\[ n^2+n+41 \]
+
+It turns out that the formula will produce 40 primes for the consecutive integer
+values \(0\leq n\leq39\). However, when \(n=40\), \(40^2+40+41=40(40+1)+41\) is
+divisible by 41, and certainly when \(n=41\),\(41^2+41+41\) is clearly divisible
+by 41.
+
+The incredible formula \(n^2-79n+1601\) was discovered, which produces 80 primes
+for the consecutive values \(0\leq n\leq79\). The product of the coefficients,
+−79 and 1601, is −126479.
+
+Considering quadratics of the form:
+
+\(n^2+an+b\), where \(|a| < 1000\) and \(|b|\leq1000\)
+
+where \(|n|\) is the modulus/absolute value of \(n\)
+e.g. \(|11|=11\) and \(|−4|=4\)
+
+Find the product of the coefficients, \(a\) and \(b\), for the quadratic
+expression that produces the maximum number of primes for consecutive values of
+\(n\), starting with \(n=0\).
+
+** A:
+For \(n=0\), we have
+
+\begin{eqnarray*}
+0^2 + a\cdot 0 + b & = & p \\
+                 b & = & p
+\end{eqnarray*}
+
+where \(p\) is prime. Since \(b=p\), \(b\) is also prime. For \(n=1\) we have
+
+\begin{eqnarray*}
+1^2 + a\cdot 1 + b & = & p \\
+         1 + a + b & = & p
+\end{eqnarray*}
+
+Since \(b\) must be odd, \(b+1\) must be even, and \(a\) must be odd.
+Additionally, \(a > -b\). With our search space reduced, we simply must use
+brute force search to find the answer.
+
+#+begin_src jupyter-python
+from euler import esieve, is_prime
+
+def pe027(limit=1000):
+    primes = esieve(limit+1)
+    nmax = 0
+    for b in primes:
+        for a in range(-b+2,limit,2):
+            n = 1
+            while is_prime(n*n + a*n + b):
+                n += 1
+            n += -1
+            if n >= nmax:
+                nmax = n
+                p = (a,b)
+    return p
+
+p = pe027()
+print(p)
+print(p[0]*p[1])
+%timeit pe027()
+#+end_src
+
+#+RESULTS:
+: (-61, 971)
+: -59231
+: 83.2 ms ± 800 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
+
+* 28 Number spiral diagonals
+Starting with the number 1 and moving to the right in a clockwise direction a 5
+by 5 spiral is formed as follows:
+
+#+begin_example
+21 22 23 24 25
+20  7  8  9 10
+19  6  1  2 11
+18  5  4  3 12
+17 16 15 14 13
+#+end_example
+
+It can be verified that the sum of the numbers on the diagonals is 101.
+
+What is the sum of the numbers on the diagonals in a 1001 by 1001 spiral formed
+in the same way?
+
+** A:
+
+Notice how the top right corner of each minor square is the square of an odd
+integer (\(1^2,3^2,5^2,\ldots\)) corresponding to the size of the square. So if
+we consider an arbitrary \(n\times n\) spiral matrix,
+
+\[\begin{bmatrix}
+    c_2    & \dots  & c_1    \\
+    \vdots & \ddots & \vdots \\
+    c_3    & \dots  & c_4 
+  \end{bmatrix} \]
+
+we can write all of the corner values in terms of the size,
+\(n > 1, n \equiv 1 \mod 2\). Additionally, we can write the sum of these
+corners, \(C_n\), in terms of the size.
+
+5\begin{eqnarray*}
+c_{n,1} & = & n^2 \\
+c_{n,2} & = & n^2 - (n-1) \\
+c_{n,3} & = & n^2 - 2(n-1) \\
+c_{n,4} & = & n^2 - 3(n-1) \\
+C_n     & = & 4n^2 - 6n + 6
+\end{eqnarray*}
+
+We have to recognize the special case, \(C_1 = 1\). For an arbitrary square of
+size \(n\equiv1\mod2\), the diagonal total, \(D_n\), is
+
+\begin{eqnarray*}
+D_n & = & 1 + \sum_{i\in\{3,5,\ldots,n\}} \left( 4i^2 - 6i + 6 \right) \\
+    & = & 1 - 4 + \sum_{i\in\{1,3,5,\ldots,n\}} \left( 4i^2 - 6i + 6 \right) \\
+    & = & 3(n+1) - 3 + \sum_{i\in\{1,3,5,\ldots,n\}} \left( 4i^2 - 6i\right) \\
+    & = & 3n + 4\left(\sum_{i\in\{1,3,5,\ldots,n\}} i^2\right) - 6\left(\sum_{i\in\{1,3,5,\ldots,n\}} i\right) \\
+\end{eqnarray*}
+
+The second sum looks like an odd version of the [[https://en.wikipedia.org/wiki/Triangular_number][triangular numbers]].
+
+\begin{eqnarray*}
+\sum_{i\in\{1,3,5,\ldots,n\}} i 
+& = & \sum_{i=1}^n i - \sum_{i\in\{2,4,6,\ldots,n-1\}} i \\
+& = & \sum_{i=1}^n i -  \sum_{i=1}^{(n-1)/2} 2i \\
+& = & T_n -  2T_{(n-1)/2} \\
+& = & \frac{n(n+1)}{2} -  2\frac{((n-1)/2)((n+1)/2)}{2} \\
+& = & \frac{2n^2+2n}{4} - \frac{n^2-1}{4} \\
+& = & \frac{n^2+2n+1}{4} \\
+& = & \left(\frac{n+1}{2}\right)^2 \\
+\end{eqnarray*}
+
+The first sum looks like an odd version of the [[https://en.wikipedia.org/wiki/Square_pyramidal_number][square pyramidal numbers]].
+
+\begin{eqnarray*}
+\sum_{i\in\{1,3,5,\ldots,n\}} i^2
+& = & \sum_{i=1}^n i^2 - \sum_{i\in\{2,4,6,\ldots,n-1\}} i^2 \\
+& = & \sum_{i=1}^n i^2 - \sum_{i=1}^{(n-1)/2} (2i)^2 \\
+& = & P_n - 4P_{(n-1)/2} \\
+& = & \frac{n(n+1)(2n+1)}{6} -  4\frac{((n-1)/2)((n+1)/2)(n-1+1)}{6} \\
+& = & \frac{2n^3+3n^2+n}{6} - \frac{n^3-n}{6} \\
+& = & \frac{n^3+3n^2+2n}{6} \\
+& = & \frac{n(n+1)(n+2)}{6} \\
+\end{eqnarray*}
+
+And the final formula is
+
+\begin{eqnarray*}
+D_n & = & 3n + 4\left(\frac{n^3+3n^2+2n}{6}\right) - 6\left(\frac{n^2+2n+1}{4}\right) \\
+    & = & \frac{18n}{6} + \frac{4n^3+12n^2+8n}{6} - \frac{9n^2+18n+9}{6} \\
+    & = & \frac{4n^3+3n^2+8n-9}{6} \\
+    & = & \frac{n(n(4n+3)+8)-9}{6} 
+\end{eqnarray*}
+
+where the last expression was derived from WolframAlpha.
+
+#+begin_src jupyter-python
+def pe028(n):
+    return (n*(n*(4*n+3)+8)-9)//6
+
+assert pe028(3) == 25
+assert pe028(5) == 101
+
+print(pe028(1001))
+%timeit pe028(1001)
+#+end_src
+
+#+RESULTS:
+: 669171001
+: 208 ns ± 6.56 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+
+* 29 Distinct powers
+Consider all integer combinations of \(a^b\) for \(2\leq a\leq5\) and
+\(2\leq b\leq5\):
+
+\[
+2^2=4, 2^3=8, 2^4=16, 2^5=32 \\
+3^2=9, 3^3=27, 3^4=81, 3^5=243 \\
+4^2=16, 4^3=64, 4^4=256, 4^5=1024 \\
+5^2=25, 5^3=125, 5^4=625, 5^5=3125
+\]
+
+If they are then placed in numerical order, with any repeats removed, we get the
+following sequence of 15 distinct terms:
+
+4, 8, 9, 16, 25, 27, 32, 64, 81, 125, 243, 256, 625, 1024, 3125
+
+How many distinct terms are in the sequence generated by \(a^b\) for
+\(2\leq a\leq100\) and \(2\leq b\leq100\)?
+
+** A:
+Easy by brute force and a set.
+
+#+begin_src jupyter-python
+powers = set()
+for a in range(2,101):
+    for b in range(2,101):
+        powers.add(a**b)
+print(len(powers))
+#+end_src
+
+#+RESULTS:
+: 9183
+
+The brute force solution is fine for Project Euler, but the HackerRank version
+has much more difficult test cases. 
+
+The only way to assure that our terms are unique is to express them in terms of
+irreducible bases. Let \(S=\{a^b:a,b\in\{2,...,n\}\}\). Consider \(a^b\in S\)
+where \(a\) is not a perfect power. Then \(a^b=(a'^k)^b=a'^{kb}\). The
+representation is not unique. Therefore, the representation \(a^b\) is unique if
+and only if there are no integers \(a',k\) such that \(a=a'^k\).
+
+With this in mind, I first build a set of all the perfect powers. Second, I
+build a dictionary where keys are the maximum possible \(k\) of an irreducible
+base and the values are the number of \(kb\) that are valid for that maximum
+\(k\). Lastly, for each base that is not a perfect power, I add to a running
+total the number of valid \(kb\), where \(k=\lfloor\log_a n\rfloor\).
+
+#+begin_src jupyter-python
+def pe029(n):
+    pp = set()
+    for a in range(2,int(n**0.5)+1):
+        b, c = (2, pow(a,2))
+        while c <= n:
+            pp.add(c)
+            b, c = (b+1, pow(a,b+1))
+
+    exp = {1:set(range(2,n+1))}
+    for k in range(2,ceil(log2(n))):
+        exp[k] = set(range(2*k,n*k+1,k))
+        exp[k] = exp[k].union(exp[k-1])
+    for k in range(1,ceil(log2(n))):
+        exp[k] = len(exp[k])
+
+    count = 0
+    for a in range(2,n+1):
+        if a not in pp:
+            count += exp[int(log(n,a))]
+
+    return count
+
+assert pe029(5) == 15
+print(pe029(100))
+%timeit pe029(100)
+#+end_src
+
+#+RESULTS:
+: 9183
+: 60.5 µs ± 642 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+This method is the only efficient way I found to do large limits. Note that for
+some specific \(n\), floating point error in =log(n,a)= results in the wrong
+answer.
+
+#+begin_src jupyter-python
+print(pe029(100000))
+%timeit pe029(100000)
+#+end_src
+
+#+RESULTS:
+: 9981236306
+: 381 ms ± 7.31 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+* 30 Digit fifth powers
+Surprisingly there are only three numbers that can be written as the sum of
+fourth powers of their digits:
+
+\begin{eqnarray*}
+1634 = 1^4 + 6^4 + 3^4 + 4^4 \\
+8208 = 8^4 + 2^4 + 0^4 + 8^4 \\
+9474 = 9^4 + 4^4 + 7^4 + 4^4 \\
+\end{eqnarray*}
+
+As \(1 = 1^4\) is not a sum it is not included.
+
+The sum of these numbers is 1634 + 8208 + 9474 = 19316.
+
+Find the sum of all the numbers that can be written as the sum of fifth powers
+of their digits.
+
+** A:
+At first, I had generated bounds for the number and checked if every number in
+those bounds were equal to the fifth power of their digits. This was fine for
+PE, but HackerRank asks for sixth powers, which timed out the old
+implementation. My new method also uses bounds to restrict the search space, but
+instead of checking through every number in the bounds, I check combinations of
+digits.
+
+Let \(N\) be an \(n\) digit number.
+
+\[ 10^{n-1} \leq N < 10^n \]
+
+And let the sum of the \(3\leq p\leq 6\) powers of the digits be equal to \(N\).
+
+\[ N = d_1d_2\dots d_n = d_1^p + d_2^p + \dots + d_n^p \]
+
+A digit can only take values \(0,1,\dots,9\) so that enforces another upper
+bound.
+
+\[ N \leq n(9^p) \]
+
+For now, we've fixed the digits. But these can change. We know \(n\geq2\) from
+the problem statement. We also know that \(O(10^{n-1}) > O(n(9^p))\). Therefore,
+there will be some \(n'\) that results in \(n'(9^p)\leq10^{n'-1}\). There can be
+no candidates that are \(n'\) digits long. 
+
+With this information, the problem is solved in two steps. First, I iterate
+through \(n\) until I find the first \(n'\). Then, I iterate through
+\(n=2,\ldots,n-1\), and for each length of digits iterate through the
+combinations, with replacement, of \(2\leq n < n'\) digits to their \(p\)
+powers. With =str= sorting and comparison, hits are easy to check.
+
+#+begin_src jupyter-python
+def pe030(p):
+    """Find all the numbers whose digits to the ``p``th power is that number."""
+    numbers = []
+    power = [i**p for i in range(10)]
+
+    nmax = 2
+    limit = nmax*power[-1]
+    while 10**(nmax-1) < limit:
+        nmax += 1
+        limit = nmax*power[-1]
+
+    for n in range(2,nmax):
+        for c in combinations_with_replacement(range(10),n):
+            n = sum([power[d] for d in c])
+            n_str = str(n)
+            if n > 0 and len(n_str) == len(c):
+                if ''.join(sorted(n_str)) == ''.join(map(str, c)):
+                    numbers += [n]
+
+    return sorted(numbers)
+
+assert pe030(4) == [1634, 8208, 9474]
+
+print(pe030(5))
+%timeit pe030(5)
+#+end_src
+
+#+RESULTS:
+: [4150, 4151, 54748, 92727, 93084, 194979]
+: 21.8 ms ± 364 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
